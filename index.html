@@ -1,0 +1,3256 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1" />
+  <meta name="theme-color" content="#006837" />
+  <meta name="description"
+    content="BNA FraudShield — AI-powered fraud detection system for Banque Nationale Agricole de Tunisie" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="FraudShield" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta property="og:title" content="BNA FraudShield" />
+  <meta property="og:description" content="AI-Powered Fraud Detection — BNA Tunisia" />
+  <meta property="og:type" content="website" />
+  <title>BNA FraudShield — AI Fraud Detection</title>
+  <link rel="manifest"
+    href="data:application/manifest+json,%7B%22name%22%3A%22BNA%20FraudShield%22%2C%22short_name%22%3A%22FraudShield%22%2C%22description%22%3A%22AI%20Fraud%20Detection%20-%20BNA%20Tunisia%22%2C%22start_url%22%3A%22%2F%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230d1117%22%2C%22theme_color%22%3A%22%23006837%22%7D" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap"
+    rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" defer></script>
+  <style>
+    :root {
+      --g900: #001a0d;
+      --g800: #004d26;
+      --g700: #006837;
+      --g600: #2e8b57;
+      --g500: #52a96e;
+      --g400: #7dc497;
+      --g100: #e8f5ee;
+      --g50: #f4fbf6;
+      --r500: #c0392b;
+      --r100: #fdecea;
+      --a500: #d68910;
+      --a100: #fef9e7;
+      --b500: #2471a3;
+      --b100: #d6eaf8;
+      --n900: #0d1a12;
+      --n700: #1e3328;
+      --n300: #4a6355;
+      --n200: #8aaa96;
+      --n100: #c8ddd0;
+      --n50: #f0f6f2;
+      --white: #fff;
+      --shadow-sm: 0 1px 4px rgba(0, 60, 30, .08);
+      --shadow-md: 0 4px 16px rgba(0, 60, 30, .12);
+      --shadow-lg: 0 8px 32px rgba(0, 60, 30, .16);
+      --transition: all .2s cubic-bezier(.4, 0, .2, 1);
+      --radius: 12px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--n50);
+      color: var(--n900);
+      min-height: 100vh;
+      display: flex;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    /* MOBILE OVERLAY */
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .55);
+      z-index: 99;
+      backdrop-filter: blur(2px);
+    }
+
+    .sidebar-overlay.open {
+      display: block;
+    }
+
+    /* HAMBURGER */
+    .ham-btn {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      width: 38px;
+      height: 38px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      border-radius: 8px;
+      padding: 6px;
+      transition: background .15s;
+      flex-shrink: 0;
+    }
+
+    .ham-btn:hover {
+      background: var(--n50);
+    }
+
+    .ham-btn svg {
+      width: 22px;
+      height: 22px;
+      stroke: var(--n700);
+      stroke-width: 2;
+      fill: none;
+    }
+
+    /* SCROLLABLE TABLES on mobile */
+    .table-scroll {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* TOUCH TARGETS */
+    .nav-item {
+      min-height: 44px;
+    }
+
+    .btn,
+    .fbtn {
+      min-height: 40px;
+    }
+
+    .btn-validate,
+    .btn-analyze {
+      min-height: 48px;
+    }
+
+    /* SMOOTH SIDEBAR TRANSITION */
+    .sidebar {
+      transition: transform .28s cubic-bezier(.4, 0, .2, 1);
+    }
+
+    /* ── RESPONSIVE BREAKPOINTS ── */
+    @media (max-width:900px) {
+      .form-grid {
+        grid-template-columns: 1fr !important;
+      }
+
+      .kpi-grid {
+        grid-template-columns: 1fr 1fr !important;
+      }
+
+      .charts-row {
+        grid-template-columns: 1fr !important;
+      }
+
+      .algo-grid {
+        grid-template-columns: 1fr 1fr !important;
+      }
+
+      .rules-grid {
+        grid-template-columns: 1fr !important;
+      }
+
+      .info-grid {
+        grid-template-columns: 1fr !important;
+      }
+
+      .result-panel {
+        margin-top: 0;
+      }
+    }
+
+    @media (max-width:700px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
+
+      .sidebar.mobile-open {
+        transform: translateX(0);
+      }
+
+      .main {
+        margin-left: 0 !important;
+      }
+
+      .ham-btn {
+        display: flex;
+      }
+
+      .topbar {
+        padding: 0 14px;
+      }
+
+      .content {
+        padding: 14px;
+      }
+
+      .kpi-grid {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 8px;
+      }
+
+      .kpi-val {
+        font-size: 22px !important;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr !important;
+      }
+
+      .frow {
+        grid-template-columns: 1fr !important;
+      }
+
+      .frow.three {
+        grid-template-columns: 1fr 1fr !important;
+      }
+
+      .charts-row {
+        grid-template-columns: 1fr !important;
+      }
+
+      .algo-grid {
+        grid-template-columns: 1fr !important;
+      }
+
+      .rules-grid {
+        grid-template-columns: 1fr !important;
+      }
+
+      .id-lookup-row {
+        flex-direction: column;
+      }
+
+      .id-lookup-row .btn-lookup {
+        width: 100%;
+      }
+
+      .topbar-title {
+        font-size: 14px !important;
+      }
+
+      .topbar-title span {
+        display: none;
+      }
+
+      .model-chip {
+        display: none;
+      }
+
+      .htable th,
+      .htable td {
+        padding: 8px 9px;
+        font-size: 11px;
+      }
+    }
+
+    @media (max-width:400px) {
+      .kpi-grid {
+        grid-template-columns: 1fr !important;
+      }
+
+      .frow.three {
+        grid-template-columns: 1fr !important;
+      }
+    }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: 232px;
+      min-height: 100vh;
+      padding-bottom: env(safe-area-inset-bottom);
+      background: linear-gradient(180deg, #001608 0%, #002410 40%, #003018 100%);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      z-index: 100;
+      box-shadow: 2px 0 16px rgba(0, 0, 0, .3);
+    }
+
+    .sidebar-logo {
+      padding: 22px 18px 18px;
+      border-bottom: 1px solid rgba(255, 255, 255, .09);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      text-align: center;
+    }
+
+    .logo-wrap {
+      width: 88px;
+      height: 54px;
+      background: #000;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px 9px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, .55), 0 0 0 1px rgba(255, 255, 255, .07);
+    }
+
+    .logo-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .logo-text h2 {
+      font-size: 15px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: .3px;
+    }
+
+    .logo-text p {
+      font-size: 9px;
+      color: rgba(255, 255, 255, .38);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    .sidebar-nav {
+      padding: 12px 10px;
+      flex: 1;
+    }
+
+    .nav-group {
+      margin-bottom: 4px;
+    }
+
+    .nav-label {
+      font-size: 9px;
+      font-weight: 700;
+      color: rgba(255, 255, 255, .28);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 10px 12px 4px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 9px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-bottom: 1px;
+      font-size: 13px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, .52);
+      transition: all .15s;
+    }
+
+    .nav-item:hover {
+      background: rgba(255, 255, 255, .07);
+      color: rgba(255, 255, 255, .9);
+    }
+
+    .nav-item.active {
+      background: linear-gradient(90deg, var(--g700), rgba(46, 139, 87, .8));
+      color: #fff;
+      font-weight: 600;
+      box-shadow: inset 3px 0 0 var(--g400);
+    }
+
+    .nav-icon {
+      width: 16px;
+      height: 16px;
+      opacity: .65;
+      flex-shrink: 0;
+    }
+
+    .nav-item.active .nav-icon {
+      opacity: 1;
+    }
+
+    .nav-badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 7px;
+      border-radius: 10px;
+      background: var(--r500);
+      color: #fff;
+      margin-left: auto;
+    }
+
+    .nav-badge.blue {
+      background: var(--b500);
+    }
+
+    .api-pill {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin: 0 10px 8px;
+      padding: 7px 12px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 600;
+      transition: all .3s;
+      background: rgba(220, 53, 53, .1);
+      color: rgba(255, 130, 130, .85);
+      border: 1px solid rgba(255, 255, 255, .08);
+    }
+
+    .api-pill.connected {
+      background: rgba(82, 169, 110, .12);
+      color: #7dc497;
+    }
+
+    .api-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(255, 130, 130, .8);
+      flex-shrink: 0;
+    }
+
+    .api-pill.connected .api-dot {
+      background: var(--g400);
+      animation: blink 2s infinite;
+    }
+
+    @keyframes blink {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: .35
+      }
+    }
+
+    .sidebar-foot {
+      padding: 10px 18px;
+      border-top: 1px solid rgba(255, 255, 255, .07);
+      font-size: 10px;
+      color: rgba(255, 255, 255, .22);
+      text-align: center;
+    }
+
+    /* MAIN */
+    .main {
+      margin-left: 232px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    .topbar {
+      background: var(--white);
+      border-bottom: 1px solid var(--n100);
+      padding: 0 28px;
+      padding-left: max(28px, env(safe-area-inset-left));
+      padding-right: max(28px, env(safe-area-inset-right));
+      height: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      box-shadow: 0 1px 0 var(--n100), 0 2px 8px rgba(0, 60, 30, .04);
+    }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .topbar-title {
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    .topbar-title span {
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--n300);
+      margin-left: 8px;
+    }
+
+    .role-badge {
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .5px;
+    }
+
+    .role-badge.user {
+      background: var(--b100);
+      color: var(--b500);
+    }
+
+    .role-badge.admin {
+      background: var(--a100);
+      color: var(--a500);
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .sys-pill {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      background: var(--g100);
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--g700);
+    }
+
+    .sys-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--g600);
+      animation: blink 2s infinite;
+    }
+
+    .model-chip {
+      padding: 4px 10px;
+      border-radius: 6px;
+      background: var(--g800);
+      font-size: 11px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, .82);
+      font-family: 'DM Mono', monospace;
+    }
+
+    .content {
+      padding: 26px;
+      flex: 1;
+    }
+
+    .page {
+      display: none;
+    }
+
+    .page.active {
+      display: block;
+      animation: fadeUp .28s ease;
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(8px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    /* SECTION HEADERS */
+    .sec-hdr {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .sec-hdr h3 {
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .stag {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: .6px;
+      text-transform: uppercase;
+      padding: 2px 7px;
+      border-radius: 4px;
+      background: var(--g100);
+      color: var(--g700);
+    }
+
+    .stag.red {
+      background: var(--r100);
+      color: var(--r500);
+    }
+
+    .stag.blue {
+      background: var(--b100);
+      color: var(--b500);
+    }
+
+    .stag.amber {
+      background: var(--a100);
+      color: var(--a500);
+    }
+
+    /* KPI CARDS */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 22px;
+    }
+
+    .kpi {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      border: 1px solid var(--n100);
+      position: relative;
+      overflow: hidden;
+      transition: transform .18s, box-shadow .18s;
+    }
+
+    .kpi:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .kpi::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+    }
+
+    .kpi.g::before {
+      background: linear-gradient(90deg, var(--g700), var(--g500));
+    }
+
+    .kpi.r::before {
+      background: linear-gradient(90deg, var(--r500), #e74c3c);
+    }
+
+    .kpi.a::before {
+      background: linear-gradient(90deg, #b7770d, var(--a500));
+    }
+
+    .kpi.b::before {
+      background: linear-gradient(90deg, #1a5276, #2980b9);
+    }
+
+    .kpi.red::before {
+      background: var(--r500);
+    }
+
+    .kpi-lbl {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--n200);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 7px;
+    }
+
+    .kpi-val {
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      line-height: 1;
+    }
+
+    .kpi-val.g {
+      color: var(--g700);
+    }
+
+    .kpi-val.r {
+      color: var(--r500);
+    }
+
+    .kpi-val.a {
+      color: var(--a500);
+    }
+
+    .kpi-val.d {
+      color: var(--n700);
+    }
+
+    .kpi-val.b {
+      color: var(--b500);
+    }
+
+    .kpi-sub {
+      font-size: 10px;
+      color: var(--n200);
+      margin-top: 3px;
+    }
+
+    /* CARDS */
+    .card {
+      background: var(--white);
+      border-radius: var(--radius);
+      border: 1px solid var(--n100);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .card-body {
+      padding: 20px 22px;
+    }
+
+    .card-hdr {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--n100);
+    }
+
+    .card-hdr h3 {
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    /* FORM */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 400px;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .form-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      border: 1px solid var(--n100);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .form-body {
+      padding: 22px;
+    }
+
+    .fsect {
+      margin-bottom: 18px;
+    }
+
+    .fsect-title {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--n300);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      padding-bottom: 7px;
+      border-bottom: 1px solid var(--n50);
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .auto-tag {
+      font-size: 9px;
+      font-weight: 700;
+      color: var(--g600);
+      background: var(--g100);
+      padding: 1px 6px;
+      border-radius: 4px;
+    }
+
+    .frow {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 9px;
+      margin-bottom: 9px;
+    }
+
+    .frow.three {
+      grid-template-columns: 1fr 1fr 1fr;
+    }
+
+    .frow.full {
+      grid-template-columns: 1fr;
+    }
+
+    .field label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--n300);
+      margin-bottom: 3px;
+      letter-spacing: .3px;
+    }
+
+    .field input,
+    .field select {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1.5px solid var(--n100);
+      border-radius: 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      color: var(--n900);
+      background: var(--white);
+      outline: none;
+      transition: border-color .15s, box-shadow .15s;
+    }
+
+    .field input:focus,
+    .field select:focus {
+      border-color: var(--g600);
+      box-shadow: 0 0 0 3px rgba(46, 139, 87, .10);
+    }
+
+    .field input[readonly] {
+      background: var(--n50);
+      color: var(--n300);
+      cursor: default;
+      border-color: var(--n100) !important;
+      box-shadow: none !important;
+    }
+
+    .field input.invalid {
+      border-color: var(--r500) !important;
+      background: rgba(192, 57, 43, .04);
+    }
+
+    .field input.valid {
+      border-color: var(--g600);
+    }
+
+    /* BUTTONS */
+    .btn {
+      padding: 10px 18px;
+      border-radius: 8px;
+      border: none;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      transition: all .15s;
+      letter-spacing: .2px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #004d26 0%, #006837 55%, #2e8b57 100%);
+      color: #fff;
+      box-shadow: 0 2px 10px rgba(0, 104, 55, .25);
+    }
+
+    .btn-primary:hover {
+      box-shadow: 0 5px 20px rgba(0, 104, 55, .38);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary:active {
+      transform: scale(.98);
+    }
+
+    .btn-primary:disabled {
+      background: var(--n100);
+      color: var(--n200);
+      cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
+    }
+
+    .btn-validate {
+      width: 100%;
+      padding: 13px;
+      border-radius: 10px;
+      border: none;
+      background: linear-gradient(135deg, #1a5276 0%, #2471a3 100%);
+      color: #fff;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 2px 10px rgba(36, 113, 163, .3);
+      transition: all .15s;
+      margin-top: 6px;
+    }
+
+    .btn-validate:hover {
+      box-shadow: 0 5px 20px rgba(36, 113, 163, .42);
+      transform: translateY(-1px);
+    }
+
+    .btn-validate:disabled {
+      background: var(--n100);
+      color: var(--n200);
+      cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
+    }
+
+    .btn-analyze {
+      width: 100%;
+      padding: 13px;
+      border-radius: 10px;
+      border: none;
+      background: linear-gradient(135deg, #004d26 0%, #006837 55%, #2e8b57 100%);
+      color: #fff;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 2px 10px rgba(0, 104, 55, .25);
+      transition: all .15s;
+      margin-top: 6px;
+    }
+
+    .btn-analyze:hover {
+      box-shadow: 0 5px 20px rgba(0, 104, 55, .38);
+      transform: translateY(-1px);
+    }
+
+    .btn-analyze:disabled {
+      background: var(--n100);
+      color: var(--n200);
+      cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
+    }
+
+    /* RESULT PANELS */
+    .result-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .result-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 44px 20px;
+      background: var(--white);
+      border-radius: var(--radius);
+      border: 2px dashed var(--n100);
+      text-align: center;
+    }
+
+    .ph-icon {
+      font-size: 36px;
+      margin-bottom: 12px;
+      opacity: .3;
+    }
+
+    .result-placeholder p {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--n200);
+    }
+
+    .result-placeholder span {
+      font-size: 11px;
+      color: var(--n100);
+    }
+
+    /* VALIDATION RESULT */
+    .val-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 20px;
+      border: 2px solid var(--n100);
+      animation: fadeUp .3s ease;
+    }
+
+    .val-card.approved {
+      border-color: var(--g600);
+      box-shadow: 0 4px 20px rgba(0, 104, 55, .12);
+    }
+
+    .val-card.rejected {
+      border-color: var(--r500);
+      box-shadow: 0 4px 20px rgba(192, 57, 43, .14);
+    }
+
+    .val-hdr {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .val-badge {
+      padding: 5px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: .5px;
+    }
+
+    .val-badge.APPROVED {
+      background: var(--g700);
+      color: #fff;
+    }
+
+    .val-badge.REJECTED {
+      background: var(--r500);
+      color: #fff;
+    }
+
+    .val-id-box {
+      background: var(--n50);
+      border-radius: 8px;
+      padding: 14px 16px;
+      border: 1px solid var(--n100);
+      margin-top: 14px;
+    }
+
+    .val-id-box label {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--n200);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .val-id {
+      font-size: 20px;
+      font-weight: 800;
+      font-family: 'DM Mono', monospace;
+      color: var(--g700);
+      letter-spacing: 2px;
+    }
+
+    .val-tip {
+      font-size: 11px;
+      color: var(--n200);
+      margin-top: 4px;
+    }
+
+    .rule-list {
+      list-style: none;
+      margin-top: 12px;
+    }
+
+    .rule-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 9px;
+      padding: 7px 0;
+      border-bottom: 1px solid var(--n50);
+      font-size: 12px;
+    }
+
+    .rule-item:last-child {
+      border-bottom: none;
+    }
+
+    .rule-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 3px;
+    }
+
+    .rule-dot.pass {
+      background: var(--g600);
+    }
+
+    .rule-dot.fail {
+      background: var(--r500);
+    }
+
+    .rule-dot.warn {
+      background: var(--a500);
+    }
+
+    .rule-text {
+      flex: 1;
+      color: var(--n700);
+      font-weight: 500;
+    }
+
+    .rule-text small {
+      display: block;
+      color: var(--n200);
+      font-size: 10px;
+      margin-top: 1px;
+    }
+
+    /* FRAUD RESULT */
+    .fraud-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 20px;
+      border: 2px solid var(--n100);
+      transition: border-color .4s, box-shadow .4s;
+      animation: fadeUp .3s ease;
+    }
+
+    .fraud-card.fraud {
+      border-color: var(--r500);
+      box-shadow: 0 4px 24px rgba(192, 57, 43, .14);
+    }
+
+    .fraud-card.legit {
+      border-color: var(--g600);
+      box-shadow: 0 4px 20px rgba(0, 104, 55, .11);
+    }
+
+    .fraud-card.review {
+      border-color: var(--a500);
+      box-shadow: 0 4px 20px rgba(214, 137, 16, .12);
+    }
+
+    .verdict-hdr {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .vbadge {
+      padding: 5px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: .5px;
+    }
+
+    .vbadge.FRAUD {
+      background: var(--r500);
+      color: #fff;
+    }
+
+    .vbadge.LEGITIMATE {
+      background: var(--g700);
+      color: #fff;
+    }
+
+    .vbadge.REVIEW {
+      background: var(--a500);
+      color: #fff;
+    }
+
+    .achip {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .achip.BLOCK {
+      background: var(--r100);
+      color: var(--r500);
+    }
+
+    .achip.APPROVE {
+      background: var(--g100);
+      color: var(--g700);
+    }
+
+    .achip.REVIEW {
+      background: var(--a100);
+      color: var(--a500);
+    }
+
+    .gauge-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .contrib-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      border: 1px solid var(--n100);
+      animation: fadeUp .3s ease .1s both;
+    }
+
+    .contrib-hdr {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .shap-tag {
+      font-size: 9px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 4px;
+      background: var(--g100);
+      color: var(--g700);
+      letter-spacing: .5px;
+    }
+
+    .ci {
+      margin-bottom: 8px;
+    }
+
+    .ci-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2px;
+    }
+
+    .ci-name {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--n500);
+    }
+
+    .ci-val {
+      font-size: 10px;
+      font-weight: 700;
+      font-family: 'DM Mono', monospace;
+      padding: 1px 6px;
+      border-radius: 4px;
+    }
+
+    .ci-val.pos {
+      background: var(--r100);
+      color: var(--r500);
+    }
+
+    .ci-val.neg {
+      background: var(--g100);
+      color: var(--g700);
+    }
+
+    .ci-bar-bg {
+      height: 4px;
+      background: var(--n50);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .ci-bar {
+      height: 100%;
+      border-radius: 2px;
+      transition: width .75s cubic-bezier(.4, 0, .2, 1) .1s;
+    }
+
+    .ci-bar.pos {
+      background: var(--r500);
+    }
+
+    .ci-bar.neg {
+      background: var(--g600);
+    }
+
+    /* HISTORY TABLE */
+    .history-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      border: 1px solid var(--n100);
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .history-hdr {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 18px;
+      border-bottom: 1px solid var(--n100);
+    }
+
+    .history-hdr h3 {
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .fbtns {
+      display: flex;
+      gap: 5px;
+    }
+
+    .fbtn {
+      padding: 4px 12px;
+      border-radius: 6px;
+      border: 1.5px solid var(--n100);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--n300);
+      background: var(--white);
+      transition: all .15s;
+    }
+
+    .fbtn.active,
+    .fbtn:hover {
+      background: var(--g700);
+      color: #fff;
+      border-color: var(--g700);
+    }
+
+    .htable {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .htable th {
+      background: var(--g50);
+      font-size: 9px;
+      font-weight: 700;
+      color: var(--n200);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 8px 12px;
+      text-align: left;
+    }
+
+    .htable td {
+      padding: 10px 12px;
+      font-size: 12px;
+      color: var(--n700);
+      border-top: 1px solid var(--n50);
+    }
+
+    .htable tr:hover td {
+      background: var(--g50);
+      cursor: pointer;
+    }
+
+    .htable tr.fraud-row td {
+      background: rgba(192, 57, 43, .025);
+    }
+
+    .sbadge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .sbadge.fraud {
+      background: var(--r100);
+      color: var(--r500);
+    }
+
+    .sbadge.legit {
+      background: var(--g100);
+      color: var(--g700);
+    }
+
+    .sbadge.review {
+      background: var(--a100);
+      color: var(--a500);
+    }
+
+    .sbadge.valid {
+      background: var(--g100);
+      color: var(--g700);
+    }
+
+    .sbadge.pending {
+      background: var(--b100);
+      color: var(--b500);
+    }
+
+    .empty-tbl {
+      text-align: center;
+      padding: 48px;
+    }
+
+    .empty-tbl .ico {
+      font-size: 32px;
+      margin-bottom: 10px;
+      opacity: .3;
+    }
+
+    .empty-tbl p {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--n200);
+    }
+
+    /* ID LOOKUP */
+    .id-lookup-box {
+      background: linear-gradient(135deg, rgba(36, 113, 163, .06), rgba(36, 113, 163, .02));
+      border: 1.5px solid rgba(36, 113, 163, .25);
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 18px;
+    }
+
+    .id-lookup-box label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--b500);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .id-lookup-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .id-lookup-row input {
+      flex: 1;
+      padding: 9px 12px;
+      border: 1.5px solid rgba(36, 113, 163, .3);
+      border-radius: 8px;
+      font-family: 'DM Mono', monospace;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--n900);
+      letter-spacing: 1px;
+      outline: none;
+      transition: border-color .15s;
+    }
+
+    .id-lookup-row input:focus {
+      border-color: var(--b500);
+      box-shadow: 0 0 0 3px rgba(36, 113, 163, .10);
+    }
+
+    .id-lookup-row .btn-lookup {
+      padding: 9px 16px;
+      border-radius: 8px;
+      border: none;
+      background: var(--b500);
+      color: #fff;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all .15s;
+      white-space: nowrap;
+    }
+
+    .id-lookup-row .btn-lookup:hover {
+      background: #1a5276;
+    }
+
+    .id-filled-banner {
+      background: var(--g100);
+      border: 1px solid var(--n100);
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin-top: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--g700);
+    }
+
+    /* CHARTS */
+    .charts-row {
+      display: grid;
+      grid-template-columns: 1.6fr 1fr;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .chart-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      border: 1px solid var(--n100);
+      box-shadow: var(--shadow-sm);
+      transition: box-shadow .18s;
+    }
+
+    .chart-card:hover {
+      box-shadow: var(--shadow-md);
+    }
+
+    .chart-card h4 {
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+
+    .chart-card p {
+      font-size: 11px;
+      color: var(--n200);
+      margin-bottom: 12px;
+    }
+
+    .recent-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      border: 1px solid var(--n100);
+    }
+
+    .ri {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 7px 0;
+      border-bottom: 1px solid var(--n50);
+    }
+
+    .ri:last-child {
+      border-bottom: none;
+    }
+
+    .ri-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+
+    .ri-icon.fraud {
+      background: var(--r100);
+    }
+
+    .ri-icon.legit {
+      background: var(--g100);
+    }
+
+    .ri-icon.review {
+      background: var(--a100);
+    }
+
+    .ri-icon.valid {
+      background: var(--b100);
+    }
+
+    .ri-info {
+      flex: 1;
+    }
+
+    .ri-info p {
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .ri-info span {
+      font-size: 10px;
+      color: var(--n200);
+    }
+
+    .ri-prob {
+      font-size: 12px;
+      font-weight: 800;
+      font-family: 'DM Mono', monospace;
+    }
+
+    .ri-prob.fraud {
+      color: var(--r500);
+    }
+
+    .ri-prob.legit {
+      color: var(--g700);
+    }
+
+    .ri-prob.review {
+      color: var(--a500);
+    }
+
+    .ri-prob.valid {
+      color: var(--b500);
+    }
+
+    /* MODEL PAGE */
+    .algo-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .algo {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 16px;
+      border: 1px solid var(--n100);
+      position: relative;
+      overflow: hidden;
+      transition: transform .18s, box-shadow .18s;
+    }
+
+    .algo:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .algo::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+    }
+
+    .algo.pri::after {
+      background: linear-gradient(90deg, var(--g700), var(--g500));
+    }
+
+    .algo.sec::after {
+      background: linear-gradient(90deg, var(--g600), var(--g400));
+    }
+
+    .algo.base::after {
+      background: var(--n100);
+    }
+
+    .algo-rank {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--n200);
+      margin-bottom: 4px;
+    }
+
+    .algo-name {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+
+    .algo-auc {
+      font-size: 21px;
+      font-weight: 800;
+      color: var(--g700);
+      letter-spacing: -1px;
+      margin-bottom: 6px;
+      font-family: 'DM Mono', monospace;
+    }
+
+    .algo-auc.low {
+      color: var(--a500);
+    }
+
+    .algo-desc {
+      font-size: 11px;
+      color: var(--n300);
+      line-height: 1.55;
+    }
+
+    .mpill {
+      display: inline-flex;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 9px;
+      font-weight: 700;
+      margin-top: 4px;
+      margin-right: 3px;
+      background: var(--g100);
+      color: var(--g700);
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-top: 8px;
+    }
+
+    .fi {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--n50);
+    }
+
+    .fi:last-child {
+      border-bottom: none;
+    }
+
+    .fi-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+
+    .fi-icon.risk {
+      background: var(--r100);
+    }
+
+    .fi-icon.safe {
+      background: var(--g100);
+    }
+
+    .fi-icon.neutral {
+      background: var(--n50);
+    }
+
+    .fi-text p {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--n700);
+    }
+
+    .fi-text span {
+      font-size: 10px;
+      color: var(--n200);
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg)
+      }
+    }
+
+    .spinner {
+      width: 17px;
+      height: 17px;
+      border: 2px solid rgba(255, 255, 255, .3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .5s linear infinite;
+    }
+
+    .error-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 20px;
+      border: 2px solid var(--r500);
+      text-align: center;
+    }
+
+    .error-card h4 {
+      color: var(--r500);
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+
+    .error-card p {
+      font-size: 12px;
+      color: var(--n300);
+      line-height: 1.6;
+    }
+
+    .error-card code {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      background: var(--r100);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: var(--r500);
+    }
+
+    .rules-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .rules-section {
+      background: var(--n50);
+      border-radius: 8px;
+      padding: 12px 14px;
+    }
+
+    .rules-section h4 {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--n300);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .rule-entry {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 5px 0;
+      border-bottom: 1px solid var(--n100);
+      font-size: 12px;
+    }
+
+    .rule-entry:last-child {
+      border-bottom: none;
+    }
+
+    .rule-entry .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 4px;
+      background: var(--g600);
+    }
+
+    /* ── CUSTOM SCROLLBAR ── */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--n100);
+      border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--n200);
+    }
+
+    /* ── SELECTION COLOR ── */
+    ::selection {
+      background: rgba(0, 104, 55, .18);
+      color: var(--n900);
+    }
+
+    /* ── FOCUS RING ACCESSIBILITY ── */
+    button:focus-visible,
+    input:focus-visible,
+    select:focus-visible {
+      outline: 2px solid var(--g600);
+      outline-offset: 2px;
+    }
+
+    /* ── INPUT AUTOFILL STYLE ── */
+    input:-webkit-autofill {
+      -webkit-box-shadow: 0 0 0 30px var(--n50) inset !important;
+    }
+
+    /* ── PRINT STYLES ── */
+    @media print {
+
+      .sidebar,
+      .topbar,
+      .ham-btn {
+        display: none !important;
+      }
+
+      .main {
+        margin-left: 0 !important;
+      }
+
+      .page {
+        display: block !important;
+      }
+    }
+
+    /* ── REDUCE MOTION ── */
+    @media (prefers-reduced-motion:reduce) {
+      * {
+        animation-duration: .01ms !important;
+        transition-duration: .01ms !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Mobile overlay -->
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-wrap">
+        <img
+          src="data:image/png;base64,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"
+          alt="BNA Bank" />
+      </div>
+      <div class="logo-text">
+        <h2>FraudShield</h2>
+        <p>BNA Banking System</p>
+      </div>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-group">
+        <div class="nav-label">Overview</div>
+        <div class="nav-item active" onclick="showPage('dashboard',this)">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7" rx="1" />
+            <rect x="14" y="3" width="7" height="7" rx="1" />
+            <rect x="3" y="14" width="7" height="7" rx="1" />
+            <rect x="14" y="14" width="7" height="7" rx="1" />
+          </svg>
+          Dashboard
+        </div>
+      </div>
+      <div class="nav-group">
+        <div class="nav-label">User — Transaction</div>
+        <div class="nav-item" onclick="showPage('validate',this)">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 12l2 2 4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" />
+          </svg>
+          Transaction Validator
+          <span class="nav-badge blue" id="badge-validated">0</span>
+        </div>
+      </div>
+      <div class="nav-group">
+        <div class="nav-label">Admin — Fraud Analysis</div>
+        <div class="nav-item" onclick="showPage('analyze',this)">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="7" />
+            <path d="m21 21-4-4" />
+          </svg>
+          Fraud Analyzer
+        </div>
+        <div class="nav-item" onclick="showPage('history',this)">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
+            <rect x="9" y="3" width="6" height="4" rx="1" />
+            <path d="M9 12h6M9 16h4" />
+          </svg>
+          Transaction History
+          <span class="nav-badge" id="badge-fraud" style="display:none">0</span>
+        </div>
+      </div>
+      <div class="nav-group">
+        <div class="nav-label">Info</div>
+        <div class="nav-item" onclick="showPage('rules',this)">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+          </svg>
+          Banking Rules
+        </div>
+        <div class="nav-item" onclick="showPage('model',this)">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3" />
+            <path
+              d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12" />
+          </svg>
+          ML Model Info
+        </div>
+      </div>
+    </div>
+    <div class="api-pill" id="api-pill">
+      <div class="api-dot" id="api-dot"></div>
+      <span id="api-lbl">Connecting...</span>
+    </div>
+    <div class="sidebar-foot">BNA FraudShield &copy; 2025 &middot; v3.0.0</div>
+  </nav>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <button class="ham-btn" id="ham-btn" onclick="toggleSidebar()" aria-label="Menu">
+          <svg viewBox="0 0 24 24">
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </button>
+        <div class="topbar-title" id="topbar-title">Dashboard <span>Overview</span></div>
+        <div class="role-badge user" id="role-badge">USER</div>
+      </div>
+      <div class="topbar-right">
+        <div class="sys-pill">
+          <div class="sys-dot"></div>System Online
+        </div>
+        <div class="model-chip">XGBoost v2</div>
+      </div>
+    </div>
+    <div class="content">
+
+      <!-- ═══ DASHBOARD ═══ -->
+      <div class="page active" id="page-dashboard">
+        <div class="kpi-grid">
+          <div class="kpi g">
+            <div class="kpi-lbl">Validated Transactions</div>
+            <div class="kpi-val g" id="kpi-validated">0</div>
+            <div class="kpi-sub">Passed banking rules</div>
+          </div>
+          <div class="kpi r">
+            <div class="kpi-lbl">Rejected Transactions</div>
+            <div class="kpi-val r" id="kpi-rejected">0</div>
+            <div class="kpi-sub">Failed banking rules</div>
+          </div>
+          <div class="kpi r">
+            <div class="kpi-lbl">Fraud Detected</div>
+            <div class="kpi-val r" id="kpi-fraud">0</div>
+            <div class="kpi-sub">ML model flagged</div>
+          </div>
+          <div class="kpi b">
+            <div class="kpi-lbl">Under Review</div>
+            <div class="kpi-val b" id="kpi-review">0</div>
+            <div class="kpi-sub">Admin attention needed</div>
+          </div>
+        </div>
+        <div class="charts-row">
+          <div class="chart-card">
+            <h4>Risk Distribution</h4>
+            <p>Fraud probability across all fraud-analysed transactions</p><canvas id="distChart" height="145"></canvas>
+          </div>
+          <div class="chart-card">
+            <h4>Verdict Breakdown</h4>
+            <p>APPROVE / REVIEW / BLOCK ratio</p><canvas id="verdictChart" height="145"></canvas>
+          </div>
+        </div>
+        <div style="margin-top:16px">
+          <div class="sec-hdr">
+            <h3>Recent Activity</h3>
+            <div class="stag">Last 6</div>
+          </div>
+          <div class="recent-card" id="recent-list">
+            <div style="text-align:center;padding:32px;color:var(--n200)">
+              <div style="font-size:28px;margin-bottom:8px;opacity:.3">&#x1F4CA;</div>
+              <p style="font-size:13px;font-weight:500">No activity yet</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ TRANSACTION VALIDATOR (USER PAGE) ═══ -->
+      <div class="page" id="page-validate">
+        <div
+          style="background:linear-gradient(135deg,rgba(36,113,163,.08),rgba(36,113,163,.02));border:1px solid rgba(36,113,163,.2);border-radius:10px;padding:14px 18px;margin-bottom:18px;display:flex;align-items:flex-start;gap:12px;">
+          <div style="flex-shrink:0"><img
+              src="data:image/webp;base64,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"
+              alt="Valid Transaction" style="width:42px;height:42px;object-fit:contain" /></div>
+          <div>
+            <div style="font-size:14px;font-weight:700;color:var(--b500);margin-bottom:3px">Transaction Validator — User
+              Portal</div>
+            <div style="font-size:12px;color:var(--n300);line-height:1.6">Submit your transaction details here. The
+              system checks it against BNA banking rules (ATM limits, balance sufficiency, operation compatibility,
+              etc.). If valid, your transaction receives a unique ID that the bank administrator will use for fraud
+              analysis.</div>
+          </div>
+        </div>
+        <div class="form-grid">
+          <div class="form-card">
+            <div class="form-body">
+              <div class="fsect">
+                <div class="fsect-title">Account Information</div>
+                <div class="frow">
+                  <div class="field"><label>Account Type</label><select id="v-acct">
+                      <option>Checking</option>
+                      <option>Savings</option>
+                      <option>Business</option>
+                    </select></div>
+                  <div class="field"><label>Gender</label><select id="v-gender">
+                      <option>Male</option>
+                      <option>Female</option>
+                    </select></div>
+                </div>
+                <div class="frow">
+                  <div class="field"><label>Account Balance (DT)</label><input type="number" id="v-balance" value="2500"
+                      min="0" max="100000" step="50" oninput="liveValidate()" /></div>
+                  <div class="field"><label>Customer CIN / ID</label><input type="text" id="v-cin"
+                      placeholder="Ex: 01234567" maxlength="8" inputmode="numeric" pattern="[0-9]{8}"
+                      oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,8)" onblur="validateCin(this)" />
+                  </div>
+                </div>
+              </div>
+              <div class="fsect">
+                <div class="fsect-title">Transaction Details</div>
+                <div class="frow">
+                  <div class="field"><label>Amount (DT)</label><input type="number" id="v-amount" value="200" min="1"
+                      max="100000" step="10" oninput="liveValidate()" /></div>
+                  <div class="field"><label>Transaction Type</label><select id="v-txtype" onchange="liveValidate()">
+                      <option>Transfer</option>
+                      <option>Bill Payment</option>
+                      <option>Debit</option>
+                      <option>Withdrawal</option>
+                    </select></div>
+                </div>
+                <div class="frow full">
+                  <div class="field"><label>BNA Branch Location</label><select id="v-location"></select></div>
+                </div>
+              </div>
+              <div class="fsect">
+                <div class="fsect-title">Device &amp; Time</div>
+                <div class="frow">
+                  <div class="field"><label>Device Type</label><select id="v-device" onchange="liveValidate()">
+                      <option>ATM</option>
+                      <option>Desktop</option>
+                      <option>Mobile</option>
+                      <option>POS</option>
+                    </select></div>
+                  <div class="field"><label>Hour (0&ndash;23)</label><input type="number" id="v-hour" value="14" min="0"
+                      max="23" oninput="liveValidate()" /></div>
+                </div>
+                <div class="frow">
+                  <div class="field"><label>Transaction Date</label><input type="date" id="v-date"
+                      onchange="onValDateChange(this.value)" /></div>
+                  <div class="field"><label>Day / Weekend</label><input type="text" id="v-wknd" readonly /></div>
+                </div>
+                <div class="frow">
+                  <div class="field"><label>Month</label><input type="text" id="v-month" readonly /></div>
+                  <div class="field"><label>Day of Week</label><input type="text" id="v-dow" readonly /></div>
+                </div>
+              </div>
+              <!-- Live rule preview -->
+              <div id="live-rules-preview"
+                style="background:var(--n50);border-radius:8px;padding:12px;margin-bottom:12px;display:none">
+                <div
+                  style="font-size:10px;font-weight:700;color:var(--n200);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">
+                  Live Rule Check</div>
+                <div id="live-rules-list"></div>
+              </div>
+              <button class="btn-validate" id="validate-btn" aria-label="Validate Transaction"
+                onclick="runValidation()">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M9 12l2 2 4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" />
+                </svg>
+                Validate Transaction
+              </button>
+            </div>
+          </div>
+          <div class="result-panel" id="val-result-panel">
+            <div class="result-placeholder">
+              <div class="ph-icon">&#x1F4CB;</div>
+              <p>No validation yet</p><span>Fill the form and click Validate</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ FRAUD ANALYZER (ADMIN PAGE) ═══ -->
+      <div class="page" id="page-analyze">
+        <div
+          style="background:linear-gradient(135deg,rgba(214,137,16,.08),rgba(214,137,16,.02));border:1px solid rgba(214,137,16,.25);border-radius:10px;padding:14px 18px;margin-bottom:18px;display:flex;align-items:flex-start;gap:12px;">
+          <div style="font-size:24px;flex-shrink:0">&#x1F464;</div>
+          <div>
+            <div style="font-size:14px;font-weight:700;color:var(--a500);margin-bottom:3px">Fraud Analyzer —
+              Administrator Access</div>
+            <div style="font-size:12px;color:var(--n300);line-height:1.6">Enter the Transaction ID provided by the user
+              to auto-fill all details, then run the ML fraud analysis. Only validated transactions appear here.</div>
+          </div>
+        </div>
+        <!-- ID LOOKUP -->
+        <div class="id-lookup-box">
+          <label>&#x1F511; Load Transaction by ID</label>
+          <div class="id-lookup-row">
+            <input type="text" id="lookup-id" placeholder="BNA-20250401-0001" style="text-transform:uppercase"
+              oninput="this.value=this.value.toUpperCase()" />
+            <button class="btn-lookup" onclick="loadTransactionById()">Load &#x2192;</button>
+          </div>
+          <div id="id-filled-banner" class="id-filled-banner" style="display:none">
+            <span style="font-size:16px">&#x2705;</span>
+            <span id="id-filled-text">Transaction loaded</span>
+          </div>
+        </div>
+        <div class="form-grid">
+          <div class="form-card">
+            <div class="form-body">
+              <div class="fsect">
+                <div class="fsect-title">Account Information <span id="a-loaded-tag"
+                    style="display:none;font-size:9px;font-weight:700;padding:1px 6px;border-radius:4px;background:var(--g100);color:var(--g700);letter-spacing:.5px">AUTO-FILLED</span>
+                </div>
+                <div class="frow">
+                  <div class="field"><label>Account Type</label><select id="f-acct">
+                      <option>Checking</option>
+                      <option>Savings</option>
+                      <option>Business</option>
+                    </select></div>
+                  <div class="field"><label>Gender</label><select id="f-gender">
+                      <option>Male</option>
+                      <option>Female</option>
+                    </select></div>
+                </div>
+                <div class="frow full">
+                  <div class="field"><label>Account Balance (DT)</label><input type="number" id="f-balance" value="2500"
+                      min="100" max="50000" step="50" /></div>
+                </div>
+              </div>
+              <div class="fsect">
+                <div class="fsect-title">Transaction Details</div>
+                <div class="frow">
+                  <div class="field"><label>Amount (DT)</label><input type="number" id="f-amount" value="850" min="1"
+                      max="10000" step="10" /></div>
+                  <div class="field"><label>Transaction Type</label><select id="f-txtype">
+                      <option>Transfer</option>
+                      <option>Bill Payment</option>
+                      <option>Debit</option>
+                      <option>Withdrawal</option>
+                    </select></div>
+                </div>
+                <div class="frow full">
+                  <div class="field"><label>BNA Branch Location</label><select id="f-location"></select></div>
+                </div>
+              </div>
+              <div class="fsect">
+                <div class="fsect-title">Device &amp; Time <span class="auto-tag">&#x1F504; Auto from ID</span></div>
+                <div class="frow">
+                  <div class="field"><label>Device Type</label><select id="f-device">
+                      <option>ATM</option>
+                      <option>Desktop</option>
+                      <option>Mobile</option>
+                      <option>POS</option>
+                    </select></div>
+                  <div class="field"><label>Hour (0&ndash;23)</label><input type="number" id="f-hour" value="14" min="0"
+                      max="23" /></div>
+                </div>
+                <div class="frow">
+                  <div class="field"><label>Transaction Date</label><input type="date" id="f-date"
+                      onchange="onFraudDateChange(this.value)" /></div>
+                  <div class="field"><label>Day of Week</label><input type="text" id="f-dow" readonly /></div>
+                </div>
+                <div class="frow three">
+                  <div class="field"><label>Is Weekend?</label><input type="text" id="f-wknd" readonly /></div>
+                  <div class="field"><label>Month</label><input type="text" id="f-month" readonly /></div>
+                  <div class="field"><label>Day</label><input type="text" id="f-daynum" readonly /></div>
+                </div>
+              </div>
+              <button class="btn-analyze" id="analyze-btn" onclick="runAnalysis()">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                  <polyline points="22 4 12 14.01 9 11.01" />
+                </svg>
+                Run Fraud Analysis
+              </button>
+            </div>
+          </div>
+          <div class="result-panel" id="result-panel">
+            <div class="result-placeholder">
+              <div class="ph-icon">&#x1F50D;</div>
+              <p>No analysis yet</p><span>Load a transaction ID or fill the form</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ ANALYSIS HISTORY ═══ -->
+      <div class="page" id="page-history">
+        <div class="history-card">
+          <div class="history-hdr">
+            <h3>Transaction History</h3>
+            <div class="fbtns">
+              <button class="fbtn active" onclick="filterHist('all',this)">All</button>
+              <button class="fbtn" onclick="filterHist('fraud',this)">Fraud</button>
+              <button class="fbtn" onclick="filterHist('review',this)">Review</button>
+              <button class="fbtn" onclick="filterHist('legit',this)">Legitimate</button>
+            </div>
+          </div>
+          <div class="table-scroll">
+            <table class="htable">
+              <thead>
+                <tr>
+                  <th>TX ID</th>
+                  <th>Date</th>
+                  <th>Amount</th>
+                  <th>Type</th>
+                  <th>Device</th>
+                  <th>Hour</th>
+                  <th>Probability</th>
+                  <th>Verdict</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="htbody">
+                <tr>
+                  <td colspan="9">
+                    <div class="empty-tbl">
+                      <div class="ico">&#x1F4CB;</div>
+                      <p>No analyses yet</p>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div style="margin-top:16px">
+          <div class="sec-hdr">
+            <h3>Validated Transaction Pool</h3>
+            <div class="stag blue">User-submitted</div>
+          </div>
+          <div class="history-card">
+            <div class="card-hdr">
+              <h3>All Validated Transactions (awaiting fraud check)</h3>
+              <div class="stag">Click a row to load in Fraud Analyzer</div>
+            </div>
+            <div class="table-scroll">
+              <table class="htable">
+                <thead>
+                  <tr>
+                    <th>TX ID</th>
+                    <th>Date</th>
+                    <th>Amount</th>
+                    <th>Type</th>
+                    <th>Device</th>
+                    <th>Location</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="val-pool-tbody">
+                  <tr>
+                    <td colspan="7">
+                      <div class="empty-tbl">
+                        <div class="ico">&#x1F4CB;</div>
+                        <p>No validated transactions yet</p>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ BANKING RULES ═══ -->
+      <div class="page" id="page-rules">
+        <div
+          style="background:linear-gradient(135deg,rgba(0,104,55,.06),transparent);border:1px solid rgba(0,104,55,.15);border-radius:10px;padding:16px 20px;margin-bottom:18px;">
+          <div style="font-size:16px;font-weight:800;color:var(--g700);margin-bottom:4px">&#x1F3E6; BNA Banking Rules
+            &amp; Validation Logic</div>
+          <div style="font-size:12px;color:var(--n300);line-height:1.6">These are the real-world transaction rules
+            enforced by the Transaction Validator before any fraud analysis. A transaction must pass ALL applicable
+            rules before it is accepted and assigned a tracking ID.</div>
+        </div>
+        <div class="rules-grid">
+          <div class="rules-section">
+            <h4>&#x1F4B8; ATM Withdrawal Limits</h4>
+            <div class="rule-entry">
+              <div class="dot"></div>
+              <div>Maximum <strong>500 DT per ATM transaction</strong> (BNA standard limit)</div>
+            </div>
+            <div class="rule-entry">
+              <div class="dot"></div>
+              <div>Maximum <strong>1,000 DT per day</strong> via ATM (tracked per session)</div>
+            </div>
+            <div class="rule-entry">
+              <div class="dot"></div>
+              <div>ATM only supports <strong>Withdrawal</strong> — not Transfer, Bill Payment, or Debit</div>
+            </div>
+            <div class="rule-entry">
+              <div class="dot"></div>
+              <div>Minimum withdrawal: <strong>10 DT</strong></div>
+            </div>
+          </div>
+          <div class="rules-section">
+            <h4>&#x1F4B0; Balance Sufficiency Rules</h4>
+            <div class="rule-entry">
+              <div class="dot"></div>
+              <div><strong>Withdrawal, Debit, Transfer, Bill Payment</strong> — account balance must cover the amount
+              </div>
+            </div>
+            <div class="rule-entry">
+              <div class="dot"></div>
+              <div>Minimum account balance after transaction: <strong>0 DT</strong> (no overdraft)</div>
+            </div>
+          </div>
+          <div class="rules-section">
+            <h4>&#x1F4F1; Device / Operation Compatibility</h4>
+            <div class="rule-entry">
+              <div class="dot"></div>
+              <div><strong>ATM</strong>: Withdrawal only</div>
+            </div>
+            <div class="rule-entry">
+              <div class="dot"></div>
+              <div><strong>POS</strong>: Debit, Bill Payment (no transfer, no withdrawal)</div>
+            </div>
+            <div class="rule-entry">
+              <div class="dot"></div>
+              <div><strong>Mobile / Desktop</strong>: Transfer, Bill Payment, Debit</div>
+            </div>
+          </div>
+          <div class="rules-section">
+            <h4>&#x231A; Transfer Time Windows</h4>
+            <div class="rule-entry">
+              <div class="dot"></div>
+              <div>Wire <strong>Transfers</strong> via Desktop/Mobile: available <strong>24/7</strong> — all days, all
+                hours</div>
+            </div>
+            <div class="rule-entry">
+              <div class="dot"></div>
+              <div>ATM &amp; POS: available <strong>24 hours / 7 days</strong></div>
+            </div>
+            <div class="rule-entry">
+              <div class="dot"></div>
+              <div>Bill Payments: available <strong>24/7</strong> (automated system)</div>
+            </div>
+          </div>
+          <div class="rules-section">
+            <h4>&#x1F4CA; Transaction Limits by Account Type</h4>
+            <div class="rule-entry">
+              <div class="dot"></div>
+              <div><strong>Checking</strong>: max 5,000 DT per transfer</div>
+            </div>
+            <div class="rule-entry">
+              <div class="dot"></div>
+              <div><strong>Savings</strong>: max 10,000 DT per transfer</div>
+            </div>
+            <div class="rule-entry">
+              <div class="dot"></div>
+              <div><strong>Business</strong>: max 50,000 DT per transfer</div>
+            </div>
+            <div class="rule-entry">
+              <div class="dot"></div>
+              <div>Minimum transaction: <strong>1 DT</strong></div>
+            </div>
+          </div>
+          <div class="rules-section">
+            <h4>&#x2705; Other Validity Rules</h4>
+            <div class="rule-entry">
+              <div class="dot"></div>
+              <div>Amount must be a <strong>positive number</strong></div>
+            </div>
+            <div class="rule-entry">
+              <div class="dot"></div>
+              <div>Account balance must be <strong>non-negative</strong></div>
+            </div>
+            <div class="rule-entry">
+              <div class="dot"></div>
+              <div>Amount cannot exceed <strong>account type maximum</strong></div>
+            </div>
+            <div class="rule-entry">
+              <div class="dot"></div>
+              <div><strong>Savings accounts</strong> cannot make outbound Transfers</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ ML MODEL INFO ═══ -->
+      <div class="page" id="page-model">
+        <div class="sec-hdr" style="margin-bottom:16px">
+          <h3>Machine Learning Models</h3>
+          <div class="stag">200,000 rows &middot; Star Schema</div>
+        </div>
+        <div class="algo-grid">
+          <div class="algo pri">
+            <div class="algo-rank">&#9733; Primary</div>
+            <div class="algo-name">XGBoost</div>
+            <div class="algo-auc">0.96</div>
+            <div class="algo-desc">scale_pos_weight=18.83. Sequential boosting finds interaction patterns invisible to
+              linear models.</div>
+            <div><span class="mpill">Recall 0.88</span><span class="mpill">Precision 0.75</span><span class="mpill">F1
+                0.81</span></div>
+          </div>
+          <div class="algo pri">
+            <div class="algo-rank">&#9733; Primary</div>
+            <div class="algo-name">Random Forest</div>
+            <div class="algo-auc">0.94</div>
+            <div class="algo-desc">400 trees, class_weight="balanced". feature_importances_ for BNA regulatory
+              compliance.</div>
+            <div><span class="mpill">Recall 0.85</span><span class="mpill">Precision 0.72</span><span class="mpill">F1
+                0.78</span></div>
+          </div>
+          <div class="algo sec">
+            <div class="algo-rank">Primary</div>
+            <div class="algo-name">LightGBM</div>
+            <div class="algo-auc">0.95</div>
+            <div class="algo-desc">Leaf-wise growth. Native categorical support for all 80 BNA branches. Stacking
+              ensemble.</div>
+            <div><span class="mpill">Recall 0.87</span><span class="mpill">Precision 0.74</span><span class="mpill">F1
+                0.80</span></div>
+          </div>
+          <div class="algo sec">
+            <div class="algo-rank">Support</div>
+            <div class="algo-name">Isolation Forest</div>
+            <div class="algo-auc">0.72</div>
+            <div class="algo-desc">Unsupervised anomaly detection. Generates anomaly_score feature for supervised
+              models.</div>
+            <div><span class="mpill">Unsupervised</span></div>
+          </div>
+          <div class="algo sec">
+            <div class="algo-rank">Ensemble</div>
+            <div class="algo-name">XGB + RF + LGBM</div>
+            <div class="algo-auc">0.97</div>
+            <div class="algo-desc">Meta-model stacking with Logistic Regression meta-learner. Best overall performance.
+            </div>
+            <div><span class="mpill">Recall 0.90</span><span class="mpill">Precision 0.78</span><span class="mpill">F1
+                0.84</span></div>
+          </div>
+          <div class="algo base">
+            <div class="algo-rank">Baseline</div>
+            <div class="algo-name">Logistic Regression</div>
+            <div class="algo-auc low">0.54</div>
+            <div class="algo-desc">Near-random. All numeric correlations &approx;0.000 with Is_Fraud. Confirms zero
+              linear signal.</div>
+            <div><span class="mpill" style="background:var(--n50);color:var(--n200)">Benchmark</span></div>
+          </div>
+        </div>
+        <div class="form-card">
+          <div class="form-body" style="padding:16px 20px">
+            <div class="fsect-title">Key Dataset Findings</div>
+            <div class="info-grid">
+              <div>
+                <p style="font-size:11px;font-weight:700;color:var(--n700);margin-bottom:7px">Critical EDA Findings</p>
+                <div class="fi">
+                  <div class="fi-icon risk">&#x26A0;</div>
+                  <div class="fi-text">
+                    <p>Zero Linear Correlations</p><span>All features: r &approx; 0.000 with Is_Fraud</span>
+                  </div>
+                </div>
+                <div class="fi">
+                  <div class="fi-icon risk">&#x2696;</div>
+                  <div class="fi-text">
+                    <p>18.8:1 Class Imbalance</p><span>189,912 legit vs 10,088 fraud</span>
+                  </div>
+                </div>
+                <div class="fi">
+                  <div class="fi-icon neutral">&#x2139;</div>
+                  <div class="fi-text">
+                    <p>Uniform Fraud Rate</p><span>~5.04% across ALL categories</span>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <p style="font-size:11px;font-weight:700;color:var(--n700);margin-bottom:7px">Engineered Features</p>
+                <div class="fi">
+                  <div class="fi-icon risk">&#x1F319;</div>
+                  <div class="fi-text">
+                    <p>high_value_night</p><span>Amount &gt; 2000 DT AND Hour in [0-5]</span>
+                  </div>
+                </div>
+                <div class="fi">
+                  <div class="fi-icon risk">&#x1F4B8;</div>
+                  <div class="fi-text">
+                    <p>balance_stress</p><span>Amount / Balance Ratio &gt; 1.0</span>
+                  </div>
+                </div>
+                <div class="fi">
+                  <div class="fi-icon risk">&#x1F4C5;</div>
+                  <div class="fi-text">
+                    <p>weekend_night</p><span>Is_Weekend=1 AND Hour &ge; 22 or &le; 5</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+
+  <script>
+    // ═══════════════════════════════════════════════════════════════
+    // PRODUCTION CONFIGURATION
+    // When deploying to internet, change API_URL to your server address.
+    // Examples:
+    //   Local dev:   'http://localhost:5000'
+    //   Production:  'https://your-server.com' or 'https://bna-fraudshield.railway.app'
+    //   Same server: '' (empty string — uses relative URLs)
+    // ═══════════════════════════════════════════════════════════════
+    // Detect environment:
+    // - Opened as file:// (local HTML file)  → hostname is '' → use localhost:5000
+    // - Served from localhost/127.0.0.1      → use localhost:5000
+    // - Deployed on a real server            → use same origin (relative)
+    // ═══════════════════════════════════════════════════════════════
+    // PRODUCTION CONFIGURATION — FraudShield Backend (Render)
+    var API = 'https://fraudshield-api-js57.onrender.com';
+    // (Change only this line if your Render URL is different)
+    var LOCATIONS = ["Tunisia, Agence Ain Draham, Route de Jendouba, Ain Draham", "Tunisia, Agence Ariana, Avenue de la R\u00e9publique, Ariana", "Tunisia, Agence Bab Alioua, Rue de Kairouan, Tunis", "Tunisia, Agence Bab Bhar, Avenue Habib Bourguiba, Tunis", "Tunisia, Agence Belv\u00e9d\u00e8re, Avenue de la Libert\u00e9, Tunis", "Tunisia, Agence Ben Arous, Avenue Habib Bourguiba, Ben Arous", "Tunisia, Agence Ben Guerdane, Route de Libye, Ben Guerdane", "Tunisia, Agence Bir Mcherga, Route de Zaghouan, Bir Mcherga", "Tunisia, Agence Bizerte, Avenue Habib Bourguiba, Bizerte", "Tunisia, Agence Bou Arada, Route de Siliana, Bou Arada", "Tunisia, Agence Boumhel, Route de Boumhel, Ben Arous", "Tunisia, Agence B\u00e9ja, Avenue Habib Bourguiba, B\u00e9ja", "Tunisia, Agence Chebba, Route de Mahdia, Chebba", "Tunisia, Agence Dahmani, Route du Kef, Dahmani", "Tunisia, Agence Djerba Houmt Souk, Avenue Habib Bourguiba, Houmt Souk", "Tunisia, Agence Douz, Avenue du 7 Novembre, Douz", "Tunisia, Agence El Hamma, Route de Gab\u00e8s, El Hamma", "Tunisia, Agence El Jem, Avenue des Martyrs, El Jem", "Tunisia, Agence El Menzah, Avenue Taieb Mhiri, Tunis", "Tunisia, Agence El Ouardia, Avenue Farhat Hached, Tunis", "Tunisia, Agence Enfidha, Route de Sousse, Enfidha", "Tunisia, Agence Ezzahra, Avenue de Tunis, Ezzahra", "Tunisia, Agence Feriana, Route de Gafsa, Feriana", "Tunisia, Agence Gab\u00e8s, Avenue Habib Bourguiba, Gab\u00e8s", "Tunisia, Agence Gafsa Cit\u00e9, Avenue Ali Bach Hamba, Gafsa", "Tunisia, Agence Gafsa Ennour, Avenue Habib Bourguiba, Gafsa", "Tunisia, Agence Ghomrassen, Route de Tataouine, Ghomrassen", "Tunisia, Agence Grombalia, Rue de Tunis, Grombalia", "Tunisia, Agence Hajeb El Ayoun, Route de Kairouan, Hajeb El Ayoun", "Tunisia, Agence Hammam Lif, Avenue Habib Bourguiba, Hammam Lif", "Tunisia, Agence Hammamet, Avenue de la Paix, Hammamet", "Tunisia, Agence Jelma, Route de Kairouan, Jelma", "Tunisia, Agence Jendouba, Avenue Habib Bourguiba, Jendouba", "Tunisia, Agence Kairouan, Avenue Habib Bourguiba, Kairouan", "Tunisia, Agence Kasserine Flavius, Avenue Habib Bourguiba, Kasserine", "Tunisia, Agence Kelibia, Rue des Martyrs, Kelibia", "Tunisia, Agence Korba, Avenue Habib Bourguiba, Korba", "Tunisia, Agence Ksar Hellal, Avenue de la Libert\u00e9, Ksar Hellal", "Tunisia, Agence K\u00e9bili, Avenue de la R\u00e9publique, K\u00e9bili", "Tunisia, Agence La Manouba, Avenue de la Libert\u00e9, La Manouba", "Tunisia, Agence Lac 2, Rue du Lac Malaren, Tunis", "Tunisia, Agence Lafayette, Avenue de Paris, Tunis", "Tunisia, Agence Le Kef, Avenue Habib Bourguiba, Le Kef", "Tunisia, Agence M'saken, Avenue de la R\u00e9publique, M'saken", "Tunisia, Agence Mahdia, Avenue Habib Bourguiba, Mahdia", "Tunisia, Agence Mareth, Route de M\u00e9denine, Mareth", "Tunisia, Agence Mateur, Route de Bizerte, Mateur", "Tunisia, Agence Medjez El Bab, Avenue de la Libert\u00e9, Medjez El Bab", "Tunisia, Agence Menzel Bourguiba, Avenue de la R\u00e9publique, Menzel Bourguiba", "Tunisia, Agence Metlaoui, Route des Mines, Metlaoui", "Tunisia, Agence Mnihla, Route de Mnihla, Ariana", "Tunisia, Agence Moknine, Route de Sfax, Moknine", "Tunisia, Agence Monastir, Avenue Habib Bourguiba, Monastir", "Tunisia, Agence Montplaisir, Rue de Jordanie, Tunis", "Tunisia, Agence Moulin Ville, Avenue Ali Bach Hamba, Sfax", "Tunisia, Agence M\u00e9denine, Avenue Habib Bourguiba, M\u00e9denine", "Tunisia, Agence Nabeul, Avenue Habib Bourguiba, Nabeul", "Tunisia, Agence Nefta, Route de Tozeur, Nefta", "Tunisia, Agence Oued Ellil, Route de Tunis, Oued Ellil", "Tunisia, Agence Passage, Avenue de Carthage, Tunis", "Tunisia, Agence Raoued, Avenue Habib Bourguiba, Raoued", "Tunisia, Agence Regueb, Route de Sfax, Regueb", "Tunisia, Agence Sakiet Ezzit, Route de Sakiet Ezzit, Sfax", "Tunisia, Agence Sbeitla, Avenue de la Libert\u00e9, Sbeitla", "Tunisia, Agence Sfax Centre, Avenue Habib Bourguiba, Sfax", "Tunisia, Agence Sfax El Jadida, Route de Gab\u00e8s, Sfax", "Tunisia, Agence Sfax Nord, Route de Tunis, Sfax", "Tunisia, Agence Sidi Bouzid, Avenue Habib Bourguiba, Sidi Bouzid", "Tunisia, Agence Siliana, Avenue de la R\u00e9publique, Siliana", "Tunisia, Agence Si\u00e8ge Social, Rue de la Monnaie, Tunis", "Tunisia, Agence Sousse Nord, Route de Tunis, Sousse", "Tunisia, Agence Sousse, Avenue Habib Bourguiba, Sousse", "Tunisia, Agence Tabarka, Avenue Habib Bourguiba, Tabarka", "Tunisia, Agence Tataouine, Avenue Habib Bourguiba, Tataouine", "Tunisia, Agence Testour, Route de B\u00e9ja, Testour", "Tunisia, Agence Thala, Avenue de la R\u00e9publique, Thala", "Tunisia, Agence Thyna, Route de Skhira, Sfax", "Tunisia, Agence Tozeur, Avenue Habib Bourguiba, Tozeur", "Tunisia, Agence Zaghouan, Avenue de la R\u00e9publique, Zaghouan", "Tunisia, Agence Zarzis, Avenue de la R\u00e9publique, Zarzis"];
+    var FRENCH_DAYS = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+    var MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    var PAGE_NAMES = { dashboard: 'Dashboard', validate: 'Transaction Validator', analyze: 'Fraud Analyzer', history: 'Transaction History', rules: 'Banking Rules', model: 'ML Model Info' };
+    var PAGE_SUBS = { dashboard: 'Overview', validate: 'User Portal', analyze: 'Admin Portal', history: 'All Records', rules: 'Validation Logic', model: 'Algorithms & Metrics' };
+    var PAGE_ROLES = { dashboard: 'user', validate: 'user', analyze: 'admin', history: 'admin', rules: 'user', model: 'user' };
+
+    // ═══════════════════════════════════════════════════
+    // BANKING VALIDATION RULES (Tunisian BNA standards)
+    // ═══════════════════════════════════════════════════
+    var RULES = {
+      ATM_MAX_PER_TX: 500,
+      ATM_MIN: 10,
+      ATM_DAILY_MAX: 1000,
+      TRANSFER_MAX: { Checking: 5000, Savings: 10000, Business: 50000 },
+      GENERAL_MAX: { Checking: 10000, Savings: 20000, Business: 100000 },
+      MIN_AMOUNT: 1,
+      BALANCE_REQUIRED: ['Withdrawal', 'Debit', 'Transfer', 'Bill Payment'],
+      ATM_OPS: ['Withdrawal'],
+      POS_OPS: ['Debit', 'Bill Payment'],
+      DIGITAL_OPS: ['Transfer', 'Bill Payment', 'Debit'],
+      TRANSFER_HOURS_START: 8,
+      TRANSFER_HOURS_END: 16,
+      SAVINGS_NO_TRANSFER: true
+    };
+
+    function validateTransaction(tx) {
+      var results = [];
+      var ok = true;
+
+      var amount = parseFloat(tx.amount) || 0;
+      var balance = parseFloat(tx.balance) || 0;
+      var hour = parseInt(tx.hour) || 0;
+      var device = tx.device;
+      var txType = tx.txType;
+      var acct = tx.acctType;
+      var isWknd = tx.isWeekend;
+
+      function pass(name, detail) { results.push({ status: 'pass', name: name, detail: detail }); }
+      function fail(name, detail) { results.push({ status: 'fail', name: name, detail: detail }); ok = false; }
+      function warn(name, detail) { results.push({ status: 'warn', name: name, detail: detail }); }
+
+      // Rule 1: Minimum amount
+      if (amount < RULES.MIN_AMOUNT)
+        fail('Minimum Amount', 'Transaction must be at least 1 DT. Entered: ' + amount + ' DT');
+      else
+        pass('Minimum Amount', 'Amount ' + amount + ' DT >= minimum 1 DT');
+
+      // Rule 2: Balance must be positive
+      if (balance < 0)
+        fail('Account Balance', 'Account balance cannot be negative');
+      else
+        pass('Account Balance', 'Balance is ' + balance + ' DT');
+
+      // Rule 3: Balance sufficiency (for debit operations)
+      if (RULES.BALANCE_REQUIRED.indexOf(txType) >= 0) {
+        if (amount > balance)
+          fail('Insufficient Balance', txType + ' of ' + amount + ' DT exceeds balance of ' + balance + ' DT');
+        else
+          pass('Sufficient Balance', 'Balance (' + balance + ' DT) covers ' + txType + ' (' + amount + ' DT)');
+      } else {
+        pass('Balance Check', txType + ' does not require balance coverage (credit facility)');
+      }
+
+      // Rule 4: ATM-specific rules
+      if (device === 'ATM') {
+        if (RULES.ATM_OPS.indexOf(txType) < 0)
+          fail('ATM Operation', 'ATM only supports Withdrawal. ' + txType + ' is not allowed at ATM');
+        else
+          pass('ATM Operation', 'Withdrawal is allowed at ATM');
+
+        if (amount > RULES.ATM_MAX_PER_TX)
+          fail('ATM Transaction Limit', 'ATM maximum per transaction is ' + RULES.ATM_MAX_PER_TX + ' DT. Amount ' + amount + ' DT exceeds this');
+        else
+          pass('ATM Transaction Limit', 'Amount ' + amount + ' DT is within ATM limit (max ' + RULES.ATM_MAX_PER_TX + ' DT)');
+
+        if (amount < RULES.ATM_MIN)
+          fail('ATM Minimum', 'ATM minimum withdrawal is ' + RULES.ATM_MIN + ' DT');
+        else
+          pass('ATM Minimum', 'Amount ' + amount + ' DT >= ATM minimum ' + RULES.ATM_MIN + ' DT');
+      }
+
+      // Rule 5: POS-specific rules
+      if (device === 'POS') {
+        if (RULES.POS_OPS.indexOf(txType) < 0)
+          fail('POS Operation', 'POS terminal does not support ' + txType + '. Allowed: Debit, Bill Payment');
+        else
+          pass('POS Operation', txType + ' is allowed on POS terminal');
+      }
+
+      // Rule 6: Digital channel (Mobile/Desktop)
+      if (device === 'Mobile' || device === 'Desktop') {
+        if (RULES.DIGITAL_OPS.indexOf(txType) < 0)
+          fail('Digital Operation', device + ' does not support ' + txType);
+        else
+          pass('Digital Operation', txType + ' is allowed on ' + device);
+      }
+
+      // Rule 7: Transfer time window — REMOVED (transfers available 24/7)
+
+      // Rule 8: Savings account cannot make outbound transfers
+      if (acct === 'Savings' && txType === 'Transfer') {
+        fail('Savings Account Restriction', 'Savings accounts cannot initiate outbound wire transfers in BNA system');
+      }
+
+      // Rule 9: Transfer maximum by account type
+      if (txType === 'Transfer') {
+        var maxT = RULES.TRANSFER_MAX[acct] || 5000;
+        if (amount > maxT)
+          fail('Transfer Limit', acct + ' account transfer limit is ' + maxT + ' DT. Amount ' + amount + ' DT exceeds this');
+        else
+          pass('Transfer Limit', 'Amount ' + amount + ' DT is within ' + acct + ' transfer limit (' + maxT + ' DT)');
+      }
+
+      // Rule 10: General maximum by account type
+      var maxG = RULES.GENERAL_MAX[acct] || 10000;
+      if (amount > maxG)
+        fail('Account Maximum', 'Maximum transaction for ' + acct + ' account is ' + maxG + ' DT. Amount ' + amount + ' DT exceeds this');
+
+      return { valid: ok, rules: results };
+    }
+
+    // ═══════════════════════════════════════════════════
+    // STATE
+    // ═══════════════════════════════════════════════════
+    var validatedPool = [];  // transactions that passed banking rules
+    var fraudHistory = [];  // transactions that went through ML fraud analysis
+    var histFilter = 'all';
+    var distChart, verdictChart;
+    var txCounter = 0;
+
+    function genTxId() {
+      txCounter++;
+      var d = new Date();
+      var yyyy = d.getFullYear();
+      var mm = String(d.getMonth() + 1).padStart(2, '0');
+      var dd = String(d.getDate()).padStart(2, '0');
+      return 'BNA-' + yyyy + mm + dd + '-' + String(txCounter).padStart(4, '0');
+    }
+
+    function vc(v) { return v === 'FRAUD' ? 'fraud' : v === 'REVIEW' ? 'review' : 'legit'; }
+
+    // ═══════════════════════════════════════════════════
+    // INIT
+    // ═══════════════════════════════════════════════════
+    window.addEventListener('DOMContentLoaded', function () {
+      var ls = document.getElementById('v-location');
+      var la = document.getElementById('f-location');
+      LOCATIONS.forEach(function (l) {
+        var o = document.createElement('option'); o.value = l; o.textContent = l; ls.appendChild(o);
+        var o2 = document.createElement('option'); o2.value = l; o2.textContent = l; la.appendChild(o2);
+      });
+      var today = new Date();
+      var s = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+      document.getElementById('v-date').value = s; onValDateChange(s);
+      document.getElementById('f-date').value = s; onFraudDateChange(s);
+      initCharts(); checkAPI(); liveValidate();
+      // Swipe gesture: swipe right from left edge to open sidebar on mobile
+      var touchStartX = 0;
+      document.addEventListener('touchstart', function (e) { touchStartX = e.touches[0].clientX; }, { passive: true });
+      document.addEventListener('touchend', function (e) {
+        var dx = e.changedTouches[0].clientX - touchStartX;
+        if (touchStartX < 30 && dx > 60) openSidebar();
+        if (dx < -60) closeSidebar();
+      }, { passive: true });
+      // Close sidebar on resize to desktop
+      window.addEventListener('resize', function () {
+        if (window.innerWidth > 700) closeSidebar();
+      });
+    });
+
+    // ═══════════════════════════════════════════════════
+    // DATE HELPERS
+    // ═══════════════════════════════════════════════════
+    function parseDateFields(dateStr) {
+      if (!dateStr) return null;
+      var p = dateStr.split('-');
+      var y = parseInt(p[0]), m = parseInt(p[1]), d = parseInt(p[2]);
+      var dt = new Date(y, m - 1, d);
+      var wd = dt.getDay();
+      return { y: y, m: m, d: d, wd: wd, isWeekend: (wd === 0 || wd === 6) ? 1 : 0, dayName: FRENCH_DAYS[wd], monthName: MONTH_NAMES[m - 1] };
+    }
+    function onValDateChange(ds) {
+      var f = parseDateFields(ds); if (!f) return;
+      document.getElementById('v-dow').value = f.dayName;
+      document.getElementById('v-wknd').value = f.isWeekend ? 'Yes - Weekend' : 'No - Weekday';
+      document.getElementById('v-month').value = f.monthName;
+      var el = document.getElementById('v-date');
+      el.dataset.isWeekend = f.isWeekend; el.dataset.month = f.m; el.dataset.day = f.d;
+      liveValidate();
+    }
+    function onFraudDateChange(ds) {
+      var f = parseDateFields(ds); if (!f) return;
+      document.getElementById('f-dow').value = f.dayName;
+      document.getElementById('f-wknd').value = f.isWeekend ? 'Yes - Weekend' : 'No - Weekday';
+      document.getElementById('f-month').value = f.monthName;
+      document.getElementById('f-daynum').value = f.d;
+      var el = document.getElementById('f-date');
+      el.dataset.isWeekend = f.isWeekend; el.dataset.month = f.m; el.dataset.day = f.d;
+    }
+
+    // ═══════════════════════════════════════════════════
+    // LIVE VALIDATION PREVIEW
+    // ═══════════════════════════════════════════════════
+    function liveValidate() {
+      var preview = document.getElementById('live-rules-preview');
+      var list = document.getElementById('live-rules-list');
+      var de = document.getElementById('v-date');
+      var tx = {
+        amount: parseFloat(document.getElementById('v-amount').value) || 0,
+        balance: parseFloat(document.getElementById('v-balance').value) || 0,
+        hour: parseInt(document.getElementById('v-hour').value) || 0,
+        txType: document.getElementById('v-txtype').value,
+        acctType: document.getElementById('v-acct').value,
+        device: document.getElementById('v-device').value,
+        isWeekend: parseInt(de.dataset.isWeekend || 0),
+      };
+      var result = validateTransaction(tx);
+      preview.style.display = 'block';
+      var failed = result.rules.filter(function (r) { return r.status === 'fail'; });
+      var passed = result.rules.filter(function (r) { return r.status === 'pass'; });
+      list.innerHTML = result.rules.slice(0, 5).map(function (r) {
+        var dotColor = r.status === 'pass' ? 'var(--g600)' : r.status === 'fail' ? 'var(--r500)' : 'var(--a500)';
+        var ico = r.status === 'pass' ? '\u2713' : r.status === 'fail' ? '\u2717' : '\u26A0';
+        return '<div style="display:flex;align-items:flex-start;gap:8px;padding:4px 0;font-size:11px;border-bottom:1px solid var(--n100)">'
+          + '<div style="width:7px;height:7px;border-radius:50%;background:' + dotColor + ';flex-shrink:0;margin-top:3px"></div>'
+          + '<div><span style="font-weight:600;color:' + dotColor + '">' + ico + ' ' + r.name + '</span>'
+          + '<span style="color:var(--n300);margin-left:4px">' + r.detail + '</span></div></div>';
+      }).join('');
+      if (result.rules.length > 5) {
+        list.innerHTML += '<div style="font-size:10px;color:var(--n200);padding:4px 0">...and ' + (result.rules.length - 5) + ' more checks</div>';
+      }
+    }
+
+    // ═══════════════════════════════════════════════════
+    // VALIDATION
+    // ═══════════════════════════════════════════════════
+    function runValidation() {
+      var btn = document.getElementById('validate-btn');
+      btn.innerHTML = '<div class="spinner"></div> Checking...';
+      btn.disabled = true;
+
+      setTimeout(function () {
+        var de = document.getElementById('v-date');
+        var isW = parseInt(de.dataset.isWeekend || 0);
+        var month = parseInt(de.dataset.month || (new Date().getMonth() + 1));
+        var ds = de.value || '';
+
+        var tx = {
+          amount: parseFloat(document.getElementById('v-amount').value) || 0,
+          balance: parseFloat(document.getElementById('v-balance').value) || 0,
+          hour: parseInt(document.getElementById('v-hour').value) || 0,
+          txType: document.getElementById('v-txtype').value,
+          acctType: document.getElementById('v-acct').value,
+          gender: document.getElementById('v-gender').value,
+          device: document.getElementById('v-device').value,
+          location: document.getElementById('v-location').value,
+          cin: document.getElementById('v-cin').value,
+          isWeekend: isW, month: month, dateStr: ds,
+          dow: document.getElementById('v-dow').value,
+        };
+
+        var result = validateTransaction(tx);
+        var panel = document.getElementById('val-result-panel');
+
+        if (result.valid) {
+          var txId = genTxId();
+          tx.txId = txId; tx.status = 'pending';
+          validatedPool.push(tx);
+
+          // APPROVED — show only the ID, no rule list
+          panel.innerHTML =
+            '<div class="val-card approved">'
+            + '<div class="val-hdr"><span class="val-badge APPROVED">\u2713 TRANSACTION VALID</span>'
+            + '<span style="font-size:11px;color:var(--g700);font-weight:600">All rules passed</span></div>'
+            + '<div class="val-id-box">'
+            + '<label>Transaction Reference ID</label>'
+            + '<div class="val-id">' + txId + '</div>'
+            + '<div class="val-tip">Give this ID to the bank administrator for fraud verification</div>'
+            + '</div>'
+            + '<div style="margin-top:12px;background:var(--g100);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--g700);font-weight:600">'
+            + '\u2139 Transaction saved. Admin can load it using the ID above in the Fraud Analyzer.</div>'
+            + '</div>';
+          document.getElementById('badge-validated').textContent = validatedPool.length;
+          updateDashboard(); updateValPool();
+        } else {
+          // REJECTED — show ONLY the violated rules
+          var failedRules = result.rules.filter(function (r) { return r.status === 'fail'; });
+          panel.innerHTML =
+            '<div class="val-card rejected">'
+            + '<div class="val-hdr"><span class="val-badge REJECTED">\u2717 TRANSACTION REJECTED</span>'
+            + '<span style="font-size:11px;color:var(--r500);font-weight:600">' + failedRules.length + ' problem(s) found</span></div>'
+            + '<div style="background:var(--r100);border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:var(--r500);font-weight:600">'
+            + 'Please fix the following issue(s) to proceed:</div>'
+            + '<ul class="rule-list">' + failedRules.map(function (r) {
+              return '<li class="rule-item">'
+                + '<div class="rule-dot fail"></div>'
+                + '<div class="rule-text" style="color:var(--r500)">'
+                + r.name
+                + '<small style="color:var(--r600)">' + r.detail + '</small>'
+                + '</div></li>';
+            }).join('') + '</ul>'
+            + '</div>';
+        }
+        btn.innerHTML = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 12l2 2 4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/></svg> Validate Transaction';
+        btn.disabled = false;
+      }, 500);
+    }
+
+    // ═══════════════════════════════════════════════════
+    // ID LOOKUP
+    // ═══════════════════════════════════════════════════
+    function loadTransactionById() {
+      var id = document.getElementById('lookup-id').value.trim().toUpperCase();
+      if (!id) { alert('Please enter a Transaction ID'); return; }
+
+      var tx = null;
+      for (var i = 0; i < validatedPool.length; i++) {
+        if (validatedPool[i].txId === id) { tx = validatedPool[i]; break; }
+      }
+
+      if (!tx) {
+        alert('Transaction ID "' + id + '" not found.\n\nMake sure the user has submitted and validated the transaction first.');
+        return;
+      }
+
+      // Auto-fill the fraud analysis form
+      document.getElementById('f-acct').value = tx.acctType || 'Checking';
+      document.getElementById('f-gender').value = tx.gender || 'Male';
+      document.getElementById('f-balance').value = tx.balance || 2500;
+      document.getElementById('f-amount').value = tx.amount || 500;
+      document.getElementById('f-txtype').value = tx.txType || 'Transfer';
+      document.getElementById('f-device').value = tx.device || 'ATM';
+      document.getElementById('f-hour').value = tx.hour || 14;
+
+      // Location
+      var locSel = document.getElementById('f-location');
+      for (var j = 0; j < locSel.options.length; j++) {
+        if (locSel.options[j].value === tx.location) { locSel.selectedIndex = j; break; }
+      }
+
+      // Date
+      if (tx.dateStr) {
+        document.getElementById('f-date').value = tx.dateStr;
+        onFraudDateChange(tx.dateStr);
+      }
+
+      // Show auto-filled banner
+      var banner = document.getElementById('id-filled-banner');
+      banner.style.display = 'flex';
+      document.getElementById('id-filled-text').textContent = 'Loaded: ' + id + ' | ' + tx.txType + ' | ' + tx.amount + ' DT | ' + tx.dateStr;
+      document.getElementById('a-loaded-tag').style.display = 'inline';
+
+      // Scroll to form
+      document.getElementById('f-acct').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    // ═══════════════════════════════════════════════════
+    // FRAUD ANALYSIS
+    // ═══════════════════════════════════════════════════
+    function runAnalysis() {
+      var btn = document.getElementById('analyze-btn');
+      btn.innerHTML = '<div class="spinner"></div> Analyzing...';
+      btn.disabled = true;
+
+      var de = document.getElementById('f-date');
+      var isW = parseInt(de.dataset.isWeekend || 0);
+      var month = parseInt(de.dataset.month || (new Date().getMonth() + 1));
+      var ds = de.value || '';
+      var loadedId = document.getElementById('lookup-id').value.trim().toUpperCase();
+
+      var tx = {
+        acctType: document.getElementById('f-acct').value,
+        gender: document.getElementById('f-gender').value,
+        balance: parseFloat(document.getElementById('f-balance').value) || 2000,
+        amount: parseFloat(document.getElementById('f-amount').value) || 500,
+        txType: document.getElementById('f-txtype').value,
+        location: document.getElementById('f-location').value,
+        device: document.getElementById('f-device').value,
+        hour: parseInt(document.getElementById('f-hour').value) || 12,
+        isWeekend: isW, month: month, dateStr: ds,
+        txId: loadedId || ('MANUAL-' + Date.now()),
+      };
+
+      fetch(API + '/api/predict', {
+        method: 'POST',
+        mode: 'cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: tx.amount,
+          balance: tx.balance,
+          hour: tx.hour,
+          month: tx.month,
+          is_weekend: tx.isWeekend,
+          tx_type: tx.txType,
+          account_type: tx.acctType,
+          device: tx.device,
+          location: tx.location
+        }),
+        signal: AbortSignal.timeout(8000)
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (!data.success) throw new Error(data.error || 'Prediction failed');
+          var r = data.result;
+          fraudHistory.unshift(Object.assign({}, tx, r));
+          renderResult(tx, r);
+          updateDashboard(); renderHistTable();
+          // Update badge
+          var fraudCount = fraudHistory.filter(function (t) { return t.verdict === 'FRAUD'; }).length;
+          var fb = document.getElementById('badge-fraud');
+          if (fraudCount > 0) { fb.style.display = ''; fb.textContent = fraudCount; }
+          btn.innerHTML = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Run Fraud Analysis';
+          btn.disabled = false;
+        })
+        .catch(function (err) {
+          var panel = document.getElementById('result-panel');
+          panel.innerHTML = '<div class="error-card"><h4>\u26A0 Python API Not Running</h4><p>The fraud analysis requires the Python backend.<br><br>Open a terminal and run:<br><code>python app.py</code><br><br>Then try again.</p></div>';
+          btn.innerHTML = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Run Fraud Analysis';
+          btn.disabled = false;
+          checkAPI();
+        });
+    }
+
+    // ═══════════════════════════════════════════════════
+    // RENDER FRAUD RESULT
+    // ═══════════════════════════════════════════════════
+    function renderResult(tx, r) {
+      var panel = document.getElementById('result-panel');
+      var pct = r.probability_pct, prob = r.probability;
+      var cc = vc(r.verdict);
+      var stroke = prob >= 0.35 ? '#c0392b' : prob >= 0.15 ? '#d68910' : '#006837';
+      var R = 70, CX = 90, CY = 90, circ = Math.PI * R;
+      var arc = 'M ' + (CX - R) + ',' + CY + ' A ' + R + ',' + R + ' 0 0,1 ' + (CX + R) + ',' + CY;
+      var filled = circ * (1 - prob);
+      var ch = (r.contributions || []).slice(0, 7).map(function (c) {
+        var bw = Math.min(100, (Math.abs(c.effect) / 3.0) * 100), isP = c.effect > 0;
+        return '<div class="ci"><div class="ci-row"><span class="ci-name">' + c.name + '</span>'
+          + '<span class="ci-val ' + (isP ? 'pos' : 'neg') + '">' + (isP ? '+' : '') + c.effect.toFixed(2) + '</span></div>'
+          + '<div class="ci-bar-bg"><div class="ci-bar ' + (isP ? 'pos' : 'neg') + '" style="width:' + bw + '%"></div></div></div>';
+      }).join('');
+      var sc = r.verdict === 'FRAUD' ? 'var(--r500)' : r.verdict === 'REVIEW' ? 'var(--a500)' : 'var(--g700)';
+      var st = r.verdict === 'FRAUD' ? 'Fraud probability ' + pct + '% exceeds 35% threshold. Multiple high-risk patterns detected. BLOCK recommended.'
+        : r.verdict === 'REVIEW' ? 'Fraud probability ' + pct + '% is in the 15-35% review zone. Manual verification recommended.'
+          : 'Fraud probability ' + pct + '% is below all risk thresholds. Transaction appears legitimate. APPROVE.';
+      var aIco = r.action === 'BLOCK' ? '\uD83D\uDD34' : r.action === 'REVIEW' ? '\uD83D\uDFE1' : '\uD83D\uDFE2';
+      var rat = (tx.amount / tx.balance).toFixed(2);
+
+      panel.innerHTML =
+        '<div class="fraud-card ' + cc + '">'
+        + '<div class="verdict-hdr"><span class="vbadge ' + r.verdict + '">' + r.verdict + '</span>'
+        + '<span class="achip ' + r.action + '">' + aIco + ' ' + r.action + '</span></div>'
+        + '<div class="gauge-wrap"><svg overflow="visible" width="180" height="100" viewBox="0 0 180 100">'
+        + '<path d="' + arc + '" fill="none" stroke="var(--n50)" stroke-width="14"/>'
+        + '<path d="' + arc + '" fill="none" stroke="' + stroke + '" stroke-width="14" stroke-linecap="round" stroke-dasharray="' + circ + '" stroke-dashoffset="' + filled + '" style="transition:stroke-dashoffset .9s ease"/>'
+        + '<text x="' + CX + '" y="' + (CY - 8) + '" text-anchor="middle" font-family="DM Sans" font-size="26" font-weight="800" fill="var(--n900)">' + pct + '%</text>'
+        + '<text x="' + CX + '" y="' + (CY + 10) + '" text-anchor="middle" font-family="DM Sans" font-size="11" fill="var(--n300)">Fraud Probability</text>'
+        + '<text x="' + (CX - R - 4) + '" y="' + (CY + 18) + '" text-anchor="middle" font-size="9" fill="var(--n100)">0%</text>'
+        + '<text x="' + (CX + R + 4) + '" y="' + (CY + 18) + '" text-anchor="middle" font-size="9" fill="var(--n100)">100%</text>'
+        + '</svg><div style="display:flex;gap:12px;margin-top:3px">'
+        + '<span style="font-size:10px;font-weight:700;color:var(--g700)">0-15% APPROVE</span>'
+        + '<span style="font-size:10px;font-weight:700;color:var(--a500)">15-35% REVIEW</span>'
+        + '<span style="font-size:10px;font-weight:700;color:var(--r500)">35%+ BLOCK</span>'
+        + '</div></div>'
+        + '<div style="background:var(--n50);border-radius:8px;padding:10px 12px;margin-bottom:12px">'
+        + '<p style="font-size:11px;color:' + sc + ';font-weight:600;line-height:1.6">' + st + '</p></div>'
+        + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:4px">'
+        + '<div style="background:var(--n50);border-radius:7px;padding:8px;text-align:center"><p style="font-size:9px;color:var(--n200);font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:2px">Amount</p><p style="font-size:13px;font-weight:800;font-family:DM Mono,monospace">' + tx.amount.toFixed(0) + ' DT</p></div>'
+        + '<div style="background:var(--n50);border-radius:7px;padding:8px;text-align:center"><p style="font-size:9px;color:var(--n200);font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:2px">A/B Ratio</p><p style="font-size:13px;font-weight:800;font-family:DM Mono,monospace;color:' + (tx.amount / tx.balance > 1 ? 'var(--r500)' : 'var(--n900)') + '">' + rat + 'x</p></div>'
+        + '<div style="background:var(--n50);border-radius:7px;padding:8px;text-align:center"><p style="font-size:9px;color:var(--n200);font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:2px">Hour</p><p style="font-size:13px;font-weight:800;font-family:DM Mono,monospace;color:' + (tx.hour <= 5 ? 'var(--a500)' : 'var(--n900)') + '">' + String(tx.hour).padStart(2, '0') + ':00</p></div>'
+        + '</div></div>'
+        + '<div class="contrib-card"><div class="contrib-hdr">Feature Contributions <span class="shap-tag">SHAP-style</span></div>'
+        + (ch || '<p style="font-size:11px;color:var(--n200)">No significant risk factors</p>')
+        + '<p style="font-size:9px;color:var(--n200);margin-top:6px">Positive (+) raises fraud probability. Negative (\u2212) lowers it.</p></div>';
+    }
+
+    // ═══════════════════════════════════════════════════
+    // DASHBOARD
+    // ═══════════════════════════════════════════════════
+    function updateDashboard() {
+      var n = fraudHistory.length;
+      var fr = fraudHistory.filter(function (t) { return t.verdict === 'FRAUD'; }).length;
+      var rv = fraudHistory.filter(function (t) { return t.verdict === 'REVIEW'; }).length;
+      document.getElementById('kpi-validated').textContent = validatedPool.length;
+      document.getElementById('kpi-fraud').textContent = fr;
+      document.getElementById('kpi-review').textContent = rv;
+      var rl = document.getElementById('recent-list');
+      var allRecent = fraudHistory.slice(0, 3).map(function (t) {
+        var v = vc(t.verdict), ic = t.verdict === 'FRAUD' ? '\uD83D\uDEA8' : t.verdict === 'REVIEW' ? '\u26A0\uFE0F' : '\u2705';
+        var city = t.location ? t.location.split(', ').pop() : '—';
+        return '<div class="ri"><div class="ri-icon ' + v + '">' + ic + '</div>'
+          + '<div class="ri-info"><p>' + t.txType + ' \u2014 ' + city + '</p>'
+          + '<span>' + t.amount.toFixed(0) + ' DT \u00B7 ' + t.dateStr + ' \u00B7 ' + String(t.hour).padStart(2, '0') + ':00</span></div>'
+          + '<div class="ri-prob ' + v + '">' + (t.probability * 100).toFixed(1) + '%</div></div>';
+      });
+      validatedPool.slice(0, 3).forEach(function (t) {
+        allRecent.push('<div class="ri"><div class="ri-icon valid">\uD83D\uDCCB</div>'
+          + '<div class="ri-info"><p>' + t.txType + ' \u2014 Validated</p>'
+          + '<span>' + t.amount.toFixed(0) + ' DT \u00B7 ' + t.dateStr + '</span></div>'
+          + '<div class="ri-prob valid">' + t.txId + '</div></div>');
+      });
+      rl.innerHTML = allRecent.length ? allRecent.join('') : '<div style="text-align:center;padding:28px;color:var(--n200)"><div style="font-size:24px;margin-bottom:8px;opacity:.3">&#x1F4CA;</div><p style="font-size:13px;font-weight:500">No activity yet</p></div>';
+      updateCharts();
+    }
+
+    // ═══════════════════════════════════════════════════
+    // HISTORY TABLES
+    // ═══════════════════════════════════════════════════
+    function filterHist(f, el) { histFilter = f; document.querySelectorAll('.fbtn').forEach(function (b) { b.classList.remove('active'); }); el.classList.add('active'); renderHistTable(); }
+    function renderHistTable() {
+      var tb = document.getElementById('htbody');
+      var data = fraudHistory;
+      if (histFilter === 'fraud') data = fraudHistory.filter(function (t) { return t.verdict === 'FRAUD'; });
+      if (histFilter === 'review') data = fraudHistory.filter(function (t) { return t.verdict === 'REVIEW'; });
+      if (histFilter === 'legit') data = fraudHistory.filter(function (t) { return t.verdict === 'LEGITIMATE'; });
+      if (!data.length) { tb.innerHTML = '<tr><td colspan="9"><div class="empty-tbl"><div class="ico">\uD83D\uDCCB</div><p>No analyses yet</p></div></td></tr>'; return; }
+      tb.innerHTML = data.map(function (t) {
+        var v = vc(t.verdict), pct = (t.probability * 100).toFixed(1);
+        var bc = t.verdict === 'FRAUD' ? '#c0392b' : t.verdict === 'REVIEW' ? '#d68910' : '#006837';
+        var bw = Math.round(t.probability * 60);
+        var vl = t.verdict === 'LEGITIMATE' ? '\u2713 LEGIT' : t.verdict === 'FRAUD' ? '\u2717 FRAUD' : '\u26A0 REVIEW';
+        return '<tr class="' + (t.verdict === 'FRAUD' ? 'fraud-row' : '') + '">'
+          + '<td style="font-family:DM Mono,monospace;font-size:11px;color:var(--b500);font-weight:700">' + t.txId + '</td>'
+          + '<td style="font-family:DM Mono,monospace;font-size:11px">' + (t.dateStr || '\u2014') + '</td>'
+          + '<td style="font-weight:700;font-family:DM Mono,monospace">' + t.amount.toFixed(0) + ' DT</td>'
+          + '<td>' + t.txType + '</td><td>' + t.device + '</td>'
+          + '<td style="font-family:DM Mono,monospace">' + String(t.hour).padStart(2, '0') + ':00</td>'
+          + '<td><span style="font-family:DM Mono,monospace;font-weight:700;color:' + bc + '">' + pct + '%</span>'
+          + '<span style="display:inline-block;width:' + bw + 'px;height:3px;background:' + bc + ';opacity:.3;vertical-align:middle;margin-left:5px;border-radius:2px"></span></td>'
+          + '<td><span class="sbadge ' + v + '">' + vl + '</span></td>'
+          + '<td><span class="sbadge ' + v + '">' + t.action + '</span></td></tr>';
+      }).join('');
+    }
+    function updateValPool() {
+      var tb = document.getElementById('val-pool-tbody');
+      if (!validatedPool.length) { tb.innerHTML = '<tr><td colspan="7"><div class="empty-tbl"><div class="ico">\uD83D\uDCCB</div><p>No validated transactions yet</p></div></td></tr>'; return; }
+      tb.innerHTML = validatedPool.map(function (t) {
+        var city = t.location ? t.location.split(', ').pop() : '—';
+        var analyzed = fraudHistory.some(function (f) { return f.txId === t.txId; });
+        return '<tr onclick="loadTxFromPool(\'' + t.txId + '\')" title="Click to load in Fraud Analyzer">'
+          + '<td style="font-family:DM Mono,monospace;font-size:11px;color:var(--b500);font-weight:700">' + t.txId + '</td>'
+          + '<td style="font-family:DM Mono,monospace;font-size:11px">' + (t.dateStr || '\u2014') + '</td>'
+          + '<td style="font-weight:700;font-family:DM Mono,monospace">' + t.amount.toFixed(0) + ' DT</td>'
+          + '<td>' + t.txType + '</td><td>' + t.device + '</td><td>' + city + '</td>'
+          + '<td><span class="sbadge ' + (analyzed ? 'legit' : 'pending') + '">' + (analyzed ? '\u2713 Analysed' : '\u23F3 Pending') + '</span></td></tr>';
+      }).join('');
+    }
+    function loadTxFromPool(txId) {
+      document.getElementById('lookup-id').value = txId;
+      showPage('analyze', document.querySelector('.nav-item[onclick*="analyze"]'));
+      loadTransactionById();
+    }
+
+    // ═══════════════════════════════════════════════════
+    // NAVIGATION
+    // ═══════════════════════════════════════════════════
+    function showPage(id, el) {
+      // Close mobile sidebar when navigating
+      if (window.innerWidth <= 700) { closeSidebar(); }
+      document.querySelectorAll('.page').forEach(function (p) { p.classList.remove('active'); });
+      document.querySelectorAll('.nav-item').forEach(function (n) { n.classList.remove('active'); });
+      document.getElementById('page-' + id).classList.add('active');
+      if (el) el.classList.add('active');
+      var role = PAGE_ROLES[id] || 'user';
+      document.getElementById('topbar-title').innerHTML = PAGE_NAMES[id] + ' <span>' + PAGE_SUBS[id] + '</span>';
+      var rb = document.getElementById('role-badge');
+      rb.textContent = role.toUpperCase();
+      rb.className = 'role-badge ' + role;
+      if (id === 'history') updateValPool();
+    }
+
+    // ═══════════════════════════════════════════════════
+    // API CHECK
+    // ═══════════════════════════════════════════════════
+    function validateCin(el) {
+      var v = el.value;
+      if (v.length > 0 && v.length < 8) {
+        el.style.borderColor = 'var(--r500)';
+        el.style.background = 'rgba(192,57,43,.04)';
+        el.title = 'CIN must be exactly 8 digits';
+      } else {
+        el.style.borderColor = '';
+        el.style.background = '';
+        el.title = '';
+      }
+    }
+    // ═══════════════════════════════════════════════════
+    // MOBILE SIDEBAR TOGGLE
+    // ═══════════════════════════════════════════════════
+    function toggleSidebar() {
+      var sb = document.querySelector('.sidebar');
+      var ov = document.getElementById('sidebar-overlay');
+      var isOpen = sb.classList.contains('mobile-open');
+      if (isOpen) { closeSidebar(); } else { openSidebar(); }
+    }
+    function openSidebar() {
+      document.querySelector('.sidebar').classList.add('mobile-open');
+      document.getElementById('sidebar-overlay').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeSidebar() {
+      document.querySelector('.sidebar').classList.remove('mobile-open');
+      document.getElementById('sidebar-overlay').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+    function checkAPI() {
+      var pill = document.getElementById('api-pill');
+      var lbl = document.getElementById('api-lbl');
+      var dot = document.getElementById('api-dot');
+      lbl.textContent = 'Connecting...';
+      pill.classList.remove('connected');
+
+      fetch(API + '/api/health', {
+        method: 'GET',
+        mode: 'cors',
+        signal: AbortSignal.timeout(3000)
+      })
+        .then(function (r) {
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          return r.json();
+        })
+        .then(function (d) {
+          if (d.status === 'online') {
+            pill.classList.add('connected');
+            dot.style.background = '';
+            lbl.textContent = 'API Connected';
+          } else {
+            throw new Error('Unexpected status');
+          }
+        })
+        .catch(function (err) {
+          pill.classList.remove('connected');
+          dot.style.background = 'rgba(255,130,130,.8)';
+          lbl.textContent = 'API Offline — Run app.py';
+          console.warn('[FraudShield] API unreachable at:', API, '| Error:', err.message);
+          // Retry after 10 seconds
+          setTimeout(checkAPI, 10000);
+        });
+    }
+
+    // ═══════════════════════════════════════════════════
+    // CHARTS
+    // ═══════════════════════════════════════════════════
+    function initCharts() {
+      Chart.defaults.font.family = "'DM Sans',sans-serif"; Chart.defaults.font.size = 11; Chart.defaults.color = '#4a6355';
+      var tt = { backgroundColor: '#1a2e23', titleColor: '#fff', bodyColor: 'rgba(255,255,255,.8)', borderColor: '#006837', borderWidth: 1, padding: 8, cornerRadius: 7 };
+      distChart = new Chart(document.getElementById('distChart').getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: ['0-5%', '5-10%', '10-15%', '15-25%', '25-35%', '35-50%', '50-70%', '70-90%', '90%+'],
+          datasets: [{ label: 'Transactions', data: Array(9).fill(0), backgroundColor: ['#006837', '#2e8b57', '#52a96e', '#7dc497', '#c4e8d0', '#e07b00', '#d35400', '#c0392b', '#7b1a12'], borderRadius: 4 }]
+        },
+        options: {
+          responsive: true, plugins: { legend: { display: false }, tooltip: tt },
+          scales: { y: { grid: { color: 'rgba(0,104,55,.05)' }, ticks: { font: { size: 10 } } }, x: { grid: { display: false }, ticks: { font: { size: 9 } } } }
+        }
+      });
+      verdictChart = new Chart(document.getElementById('verdictChart').getContext('2d'), {
+        type: 'doughnut',
+        data: { labels: ['APPROVE', 'REVIEW', 'BLOCK'], datasets: [{ data: [0, 0, 0], backgroundColor: ['#006837', '#d68910', '#c0392b'], borderWidth: 3, borderColor: '#fff', hoverOffset: 4 }] },
+        options: { cutout: '65%', responsive: true, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, usePointStyle: true, pointStyleWidth: 8 } }, tooltip: tt } }
+      });
+    }
+    function updateCharts() {
+      if (!distChart || !verdictChart) return;
+      var bins = Array(9).fill(0), edges = [.05, .10, .15, .25, .35, .50, .70, .90, 1.01];
+      fraudHistory.forEach(function (t) { for (var i = 0; i < edges.length; i++) { if (t.probability < edges[i]) { bins[i]++; break; } } });
+      distChart.data.datasets[0].data = bins; distChart.update();
+      var ap = fraudHistory.filter(function (t) { return t.action === 'APPROVE'; }).length;
+      var rv = fraudHistory.filter(function (t) { return t.action === 'REVIEW'; }).length;
+      var bl = fraudHistory.filter(function (t) { return t.action === 'BLOCK'; }).length;
+      verdictChart.data.datasets[0].data = [ap, rv, bl]; verdictChart.update();
+    }
+  </script>
+</body>
+
+</html>
