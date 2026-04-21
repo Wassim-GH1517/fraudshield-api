@@ -1885,10 +1885,50 @@
         transition-duration: .01ms !important;
       }
     }
-  </style>
+  
+/* ── ADMIN LOGIN MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px);}
+.modal-overlay.hidden{display:none;}
+.login-card{background:var(--white);border-radius:14px;padding:36px 40px;width:340px;box-shadow:0 20px 60px rgba(0,0,0,.35);text-align:center;}
+.login-card .lock-icon{font-size:36px;margin-bottom:12px;}
+.login-card h2{font-size:18px;font-weight:700;color:var(--n900);margin-bottom:4px;}
+.login-card p{font-size:12px;color:var(--n300);margin-bottom:22px;}
+.login-field{margin-bottom:14px;text-align:left;}
+.login-field label{display:block;font-size:11px;font-weight:600;color:var(--n300);margin-bottom:4px;}
+.login-field input{width:100%;padding:10px 12px;border:1.5px solid var(--n100);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--n900);outline:none;transition:border-color .15s;}
+.login-field input:focus{border-color:var(--g600);box-shadow:0 0 0 3px rgba(46,139,87,.10);}
+.login-error{font-size:11px;color:var(--r500);margin-bottom:10px;min-height:16px;font-weight:600;}
+.btn-login{width:100%;padding:12px;border-radius:8px;border:none;background:linear-gradient(135deg,#004d26 0%,#006837 55%,#2e8b57 100%);color:#fff;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;margin-top:4px;transition:all .15s;}
+.btn-login:hover{box-shadow:0 4px 16px rgba(0,104,55,.35);transform:translateY(-1px);}
+.btn-login:disabled{background:var(--n100);color:var(--n200);cursor:not-allowed;transform:none;}
+.admin-badge-pill{display:flex;align-items:center;gap:6px;margin:10px 10px 6px;padding:7px 12px;border-radius:8px;font-size:11px;font-weight:700;background:rgba(214,137,16,.12);color:#d48000;border:1px solid rgba(214,137,16,.25);}
+.logout-btn{width:calc(100% - 20px);margin:0 10px 8px;padding:7px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:rgba(255,255,255,.55);font-family:'DM Sans',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;text-align:left;display:flex;align-items:center;gap:7px;}
+.logout-btn:hover{background:rgba(192,57,43,.2);color:rgba(255,150,130,.9);border-color:rgba(192,57,43,.3);}
+</style>
 </head>
 
 <body>
+
+<!-- ── ADMIN LOGIN MODAL ── -->
+<div class="modal-overlay hidden" id="login-modal">
+  <div class="login-card">
+    <div class="lock-icon">&#x1F512;</div>
+    <h2>Administrator Access</h2>
+    <p>This section is restricted to BNA bank administrators only.</p>
+    <div class="login-field">
+      <label>Username</label>
+      <input type="text" id="login-user" placeholder="admin" autocomplete="username"/>
+    </div>
+    <div class="login-field">
+      <label>Password</label>
+      <input type="password" id="login-pass" placeholder="••••••" autocomplete="current-password"
+             onkeydown="if(event.key==='Enter') submitLogin()"/>
+    </div>
+    <div class="login-error" id="login-error"></div>
+    <button class="btn-login" id="login-btn" onclick="submitLogin()">Sign In</button>
+  </div>
+</div>
+
   <!-- Mobile overlay -->
   <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
 
@@ -1969,7 +2009,15 @@
       <div class="api-dot" id="api-dot"></div>
       <span id="api-lbl">Connecting...</span>
     </div>
-    <div class="sidebar-foot">BNA FraudShield &copy; 2025 &middot; v3.0.0</div>
+    <div class="admin-badge-pill hidden" id="admin-badge-pill">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    Admin Session Active
+  </div>
+  <button class="logout-btn hidden" id="logout-btn" onclick="adminLogout()">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    Sign Out
+  </button>
+  <div class="sidebar-foot">BNA FraudShield &copy; 2025 &middot; v3.0.0</div>
   </nav>
 
   <!-- MAIN -->
@@ -2734,6 +2782,9 @@
       document.getElementById('v-date').value = s; onValDateChange(s);
       document.getElementById('f-date').value = s; onFraudDateChange(s);
       initCharts(); checkAPI(); liveValidate();
+      // Load persistent data from backend
+      loadPoolFromBackend();
+      if (getAdminToken()) loadHistoryFromBackend();
       // Swipe gesture: swipe right from left edge to open sidebar on mobile
       var touchStartX = 0;
       document.addEventListener('touchstart', function (e) { touchStartX = e.touches[0].clientX; }, { passive: true });
@@ -2862,6 +2913,8 @@
             + '</div>';
           document.getElementById('badge-validated').textContent = validatedPool.length;
           updateDashboard(); updateValPool();
+          // Persist to backend
+          saveTxToBackend(tx);
         } else {
           // REJECTED — show ONLY the violated rules
           var failedRules = result.rules.filter(function (r) { return r.status === 'fail'; });
@@ -2985,6 +3038,8 @@
           fraudHistory.unshift(Object.assign({}, tx, r));
           renderResult(tx, r);
           updateDashboard(); renderHistTable();
+          // Persist analysis to backend
+          saveAnalysisToBackend(tx, r);
           // Update badge
           var fraudCount = fraudHistory.filter(function (t) { return t.verdict === 'FRAUD'; }).length;
           var fb = document.getElementById('badge-fraud');
@@ -3134,6 +3189,15 @@
     // NAVIGATION
     // ═══════════════════════════════════════════════════
     function showPage(id, el) {
+      // Admin-only pages require authentication
+      var adminPages = ['analyze','history'];
+      if (adminPages.indexOf(id) >= 0 && !getAdminToken()) {
+        pendingPage = {id: id, el: el};
+        document.getElementById('login-modal').classList.remove('hidden');
+        document.getElementById('login-user').focus();
+        return;
+      }
+      pendingPage = null;
       // Close mobile sidebar when navigating
       if (window.innerWidth <= 700) { closeSidebar(); }
       document.querySelectorAll('.page').forEach(function (p) { p.classList.remove('active'); });
@@ -3250,7 +3314,167 @@
       var bl = fraudHistory.filter(function (t) { return t.action === 'BLOCK'; }).length;
       verdictChart.data.datasets[0].data = [ap, rv, bl]; verdictChart.update();
     }
-  </script>
+  
+
+// ═══════════════════════════════════════════════════
+// ADMIN AUTH
+// ═══════════════════════════════════════════════════
+var pendingPage = null;
+
+function getAdminToken() {
+  return localStorage.getItem('bna_admin_token') || '';
+}
+
+function setAdminToken(token) {
+  localStorage.setItem('bna_admin_token', token);
+  document.getElementById('admin-badge-pill').classList.remove('hidden');
+  document.getElementById('logout-btn').classList.remove('hidden');
+}
+
+function clearAdminToken() {
+  localStorage.removeItem('bna_admin_token');
+  document.getElementById('admin-badge-pill').classList.add('hidden');
+  document.getElementById('logout-btn').classList.add('hidden');
+}
+
+function submitLogin() {
+  var btn  = document.getElementById('login-btn');
+  var user = document.getElementById('login-user').value.trim();
+  var pass = document.getElementById('login-pass').value.trim();
+  var err  = document.getElementById('login-error');
+  err.textContent = '';
+  btn.disabled = true;
+  btn.textContent = 'Signing in...';
+
+  fetch(API + '/api/auth/login', {
+    method: 'POST', mode: 'cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username: user, password: pass })
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(d){
+    if (d.success) {
+      setAdminToken(d.token);
+      document.getElementById('login-modal').classList.add('hidden');
+      document.getElementById('login-user').value = '';
+      document.getElementById('login-pass').value = '';
+      loadHistoryFromBackend();
+      loadPoolFromBackend();
+      // Navigate to the page that triggered the login
+      if (pendingPage) {
+        showPage(pendingPage.id, pendingPage.el);
+      }
+    } else {
+      err.textContent = 'Invalid username or password.';
+    }
+    btn.disabled = false;
+    btn.textContent = 'Sign In';
+  })
+  .catch(function(){
+    err.textContent = 'Connection error. Make sure the server is running.';
+    btn.disabled = false;
+    btn.textContent = 'Sign In';
+  });
+}
+
+function adminLogout() {
+  clearAdminToken();
+  fraudHistory  = [];
+  validatedPool = [];
+  renderHistTable();
+  updateValPool();
+  updateDashboard();
+  showPage('dashboard', document.querySelector('.nav-item[onclick*="dashboard"]'));
+}
+
+// ═══════════════════════════════════════════════════
+// BACKEND PERSISTENCE — SAVE
+// ═══════════════════════════════════════════════════
+function saveTxToBackend(tx) {
+  fetch(API + '/api/transactions/save', {
+    method: 'POST', mode: 'cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(tx)
+  }).catch(function(){ /* silent — in-memory fallback already saved */ });
+}
+
+function saveAnalysisToBackend(tx, result) {
+  var token = getAdminToken();
+  if (!token) return;
+  fetch(API + '/api/analyses/save', {
+    method: 'POST', mode: 'cors',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+    body: JSON.stringify({ txId: tx.txId || '', txData: tx, result: result })
+  }).catch(function(){ /* silent fallback */ });
+}
+
+// ═══════════════════════════════════════════════════
+// BACKEND PERSISTENCE — LOAD
+// ═══════════════════════════════════════════════════
+function loadPoolFromBackend() {
+  var token = getAdminToken();
+  if (!token) return;
+  fetch(API + '/api/transactions/pool', {
+    mode: 'cors',
+    headers: { 'Authorization': 'Bearer ' + token }
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(d){
+    if (d.success && Array.isArray(d.transactions)) {
+      // Merge with in-memory (avoid duplicates by txId)
+      var existingIds = validatedPool.map(function(t){ return t.txId; });
+      d.transactions.forEach(function(tx){
+        if (existingIds.indexOf(tx.txId) < 0) {
+          validatedPool.push(tx);
+          existingIds.push(tx.txId);
+        }
+      });
+      document.getElementById('badge-validated').textContent = validatedPool.length;
+      updateValPool();
+      updateDashboard();
+    }
+  })
+  .catch(function(){});
+}
+
+function loadHistoryFromBackend() {
+  var token = getAdminToken();
+  if (!token) return;
+  fetch(API + '/api/analyses/history', {
+    mode: 'cors',
+    headers: { 'Authorization': 'Bearer ' + token }
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(d){
+    if (d.success && Array.isArray(d.analyses)) {
+      var existingIds = fraudHistory.map(function(t){ return t.txId + '_' + (t.savedAt||''); });
+      d.analyses.forEach(function(a){
+        var key = a.txId + '_' + (a.savedAt||'');
+        if (existingIds.indexOf(key) < 0) {
+          fraudHistory.push(a);
+          existingIds.push(key);
+        }
+      });
+      renderHistTable();
+      updateDashboard();
+      // Update fraud badge
+      var fraudCount = fraudHistory.filter(function(t){ return t.verdict === 'FRAUD'; }).length;
+      var fb = document.getElementById('badge-fraud');
+      if (fraudCount > 0) { fb.style.display = ''; fb.textContent = fraudCount; }
+    }
+  })
+  .catch(function(){});
+}
+
+// Restore admin UI state on page load
+(function restoreAdminState(){
+  if (getAdminToken()) {
+    document.getElementById('admin-badge-pill').classList.remove('hidden');
+    document.getElementById('logout-btn').classList.remove('hidden');
+  }
+})();
+
+</script>
 </body>
 
 </html>
