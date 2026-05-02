@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BNA — Data Warehouse Schema</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100%; min-height: 100vh; background: #0d1117; }
+    body { font-family: 'Courier New', monospace; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useRef, useEffect, useCallback } = React;
+
+    const schema = {
+      fact: {
+        keys: [
+          { name: "Customer_Key",    type: "FK" },
+          { name: "Date_Key",        type: "FK" },
+          { name: "Location_Key",    type: "FK" },
+          { name: "Device_Key",      type: "FK" },
+          { name: "Transaction_Key", type: "FK" },
+        ],
+        kpis: [
+          "Total_Transactions",
+          "Total_Frauds",
+          "Fraud_Rate",
+          "Avg_Transaction_Amount",
+          "Avg_Fraud_Amount",
+          "Total_Transaction_Amount",
+          "Total_Fraud_Amount",
+        ],
+      },
+      dims: [
+        { id: "customer", title: "Dim_Customer", color: "#5b8dd9", fields: [
+          { name: "Customer_Key",   type: "PK" },
+          { name: "Customer_Name" },
+          { name: "Gender" },
+          { name: "Account_Type" },
+          { name: "Account_Balance" },
+        ]},
+        { id: "location", title: "Dim_Location", color: "#e07b5a", fields: [
+          { name: "Location_Key",  type: "PK" },
+          { name: "Full_Location" },
+          { name: "Agence" },
+          { name: "Address" },
+          { name: "City" },
+          { name: "Country" },
+        ]},
+        { id: "date", title: "Dim_Date", color: "#5bbf8a", fields: [
+          { name: "Date_Key",      type: "PK" },
+          { name: "Time_Key",      type: "FK" },
+          { name: "Full_Date" },
+          { name: "Day" },
+          { name: "Month" },
+          { name: "Year" },
+          { name: "Day_of_Week" },
+          { name: "Day_of_Month" },
+          { name: "Is_Weekend" },
+          { name: "Quarter" },
+          { name: "Week_of_Year" },
+          { name: "Month_of_Year" },
+        ]},
+        { id: "time", title: "Dim_Time", color: "#a97dd9", fields: [
+          { name: "Time_Key",   type: "PK" },
+          { name: "Full_Time" },
+          { name: "Hour" },
+          { name: "Minute" },
+          { name: "Second" },
+          { name: "Time_Period" },
+        ]},
+        { id: "transaction", title: "Dim_Transaction", color: "#d95b8a", fields: [
+          { name: "Transaction_Key",       type: "PK" },
+          { name: "Transaction_Type" },
+          { name: "Transaction_Date" },
+          { name: "Transaction_Amount" },
+          { name: "Transaction_Location" },
+          { name: "Transaction_Device" },
+          { name: "Amount_Category" },
+          { name: "Transaction_State (0/1)" },
+        ]},
+        { id: "device", title: "Dim_Device", color: "#5bc4d9", fields: [
+          { name: "Device_Key",  type: "PK" },
+          { name: "Device_Type" },
+        ]},
+      ],
+    };
+
+    const Badge = ({ type }) => {
+      if (!type) return null;
+      const isPK = type === "PK";
+      return (
+        <span style={{
+          fontSize:"11px", fontWeight:700, padding:"2px 6px", borderRadius:"3px",
+          marginLeft:"6px", letterSpacing:"0.5px", fontFamily:"monospace",
+          background: isPK ? "rgba(200,169,110,0.25)" : "rgba(150,150,200,0.2)",
+          color: isPK ? "#c8a96e" : "#9090c8",
+          border:`1px solid ${isPK ? "rgba(200,169,110,0.4)" : "rgba(150,150,200,0.3)"}`,
+        }}>{type}</span>
+      );
+    };
+
+    const DimCard = ({ dim, highlighted, onHover, cardRef }) => (
+      <div
+        ref={cardRef}
+        onMouseEnter={() => onHover(dim.id)}
+        onMouseLeave={() => onHover(null)}
+        style={{
+          background: highlighted ? `${dim.color}28` : `${dim.color}12`,
+          border:`1px solid ${highlighted ? dim.color : dim.color + "70"}`,
+          borderTop:`3px solid ${dim.color}`,
+          borderRadius:"10px",
+          width:"220px",
+          boxShadow: highlighted
+            ? `0 0 28px ${dim.color}55, 0 4px 24px rgba(0,0,0,0.5)`
+            : "0 2px 14px rgba(0,0,0,0.45)",
+          transition:"all 0.25s ease",
+          transform: highlighted ? "scale(1.04)" : "scale(1)",
+          cursor:"default",
+          overflow:"hidden",
+          position:"relative",
+          zIndex: highlighted ? 10 : 2,
+          fontFamily:"'DM Mono','Courier New',monospace",
+        }}
+      >
+        <div style={{
+          padding:"12px 16px 10px",
+          borderBottom:`1px solid ${dim.color}40`,
+          background:`linear-gradient(135deg,${dim.color}25,transparent)`
+        }}>
+          <div style={{
+            fontSize:"11px", letterSpacing:"2.5px", color:dim.color,
+            textTransform:"uppercase", marginBottom:"4px", fontWeight:700
+          }}>DIMENSION</div>
+          <div style={{
+            fontSize:"16px", fontWeight:800, color:"#f0f0f0", letterSpacing:"0.5px"
+          }}>{dim.title}</div>
+        </div>
+        <div style={{ padding:"8px 0 6px" }}>
+          {dim.fields.map((f, i) => (
+            <div key={i} style={{
+              display:"flex", alignItems:"center", padding:"4px 16px",
+              background: f.type==="PK" ? "rgba(200,169,110,0.06)" : "transparent",
+              borderLeft: f.type==="PK"
+                ? `2px solid ${dim.color}`
+                : f.type==="FK" ? "2px solid #9090c8" : "2px solid transparent",
+            }}>
+              <span style={{
+                fontSize:"13px",
+                color: f.type==="PK" ? "#e0d0b0" : f.type==="FK" ? "#aaaadd" : "#9aa0b0"
+              }}>{f.name}</span>
+              <Badge type={f.type} />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+
+    const FactCard = ({ factRef }) => (
+      <div ref={factRef} style={{
+        background:"rgba(200,169,110,0.07)",
+        border:"2px solid #c8a96e",
+        borderTop:"4px solid #c8a96e",
+        borderRadius:"12px",
+        width:"260px",
+        boxShadow:"0 0 48px rgba(200,169,110,0.28), 0 8px 36px rgba(0,0,0,0.55)",
+        overflow:"hidden",
+        position:"relative",
+        zIndex:3,
+        fontFamily:"'DM Mono','Courier New',monospace",
+      }}>
+        <div style={{
+          position:"absolute", top:0, left:0, right:0, bottom:0,
+          background:"radial-gradient(ellipse at 50% 0%,rgba(200,169,110,0.14) 0%,transparent 65%)",
+          pointerEvents:"none"
+        }} />
+        <div style={{
+          padding:"14px 18px 12px",
+          borderBottom:"1px solid rgba(200,169,110,0.3)",
+          background:"rgba(200,169,110,0.10)"
+        }}>
+          <div style={{
+            fontSize:"11px", letterSpacing:"2.5px", color:"#c8a96e",
+            textTransform:"uppercase", marginBottom:"6px", fontWeight:700
+          }}>STAR FACT TABLE</div>
+          <div style={{
+            fontSize:"20px", fontWeight:800, color:"#f5e8d0", letterSpacing:"0.5px"
+          }}>Fact_Transaction</div>
+        </div>
+        <div style={{ padding:"10px 0 4px" }}>
+          <div style={{
+            fontSize:"11px", letterSpacing:"2px", color:"#666",
+            padding:"0 18px 6px", fontWeight:600
+          }}>FOREIGN KEYS</div>
+          {schema.fact.keys.map((k, i) => (
+            <div key={i} style={{
+              display:"flex", alignItems:"center", padding:"4px 18px",
+              borderLeft:"2px solid rgba(150,150,200,0.4)"
+            }}>
+              <span style={{ fontSize:"13px", color:"#8888cc" }}>{k.name}</span>
+              <Badge type={k.type} />
+            </div>
+          ))}
+        </div>
+        <div style={{ padding:"4px 0 12px" }}>
+          {schema.fact.kpis.map((m, i) => (
+            <div key={i} style={{ padding:"4px 18px", borderLeft:"2px solid rgba(200,169,110,0.4)" }}>
+              <span style={{ fontSize:"13px", color:"#c8d8b0" }}>{m}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+
+    function gentleCurve(p1, p2, offset) {
+      offset = offset || 30;
+      const mx = (p1.x + p2.x) / 2;
+      const my = (p1.y + p2.y) / 2;
+      const dx = p2.x - p1.x;
+      const dy = p2.y - p1.y;
+      const len = Math.sqrt(dx*dx + dy*dy) || 1;
+      const cx = mx + (-dy / len) * offset;
+      const cy = my + (dx  / len) * offset;
+      return "M " + p1.x + " " + p1.y + " Q " + cx + " " + cy + " " + p2.x + " " + p2.y;
+    }
+
+    function anchor(r, side) {
+      switch(side){
+        case "top":           return {x:r.cx,       y:r.top};
+        case "bottom":        return {x:r.cx,       y:r.bottom};
+        case "left":          return {x:r.left,     y:r.cy};
+        case "right":         return {x:r.right,    y:r.cy};
+        case "top-left":      return {x:r.left+28,  y:r.top};
+        case "top-right":     return {x:r.right-28, y:r.top};
+        case "bottom-left":   return {x:r.left+28,  y:r.bottom};
+        case "bottom-right":  return {x:r.right-28, y:r.bottom};
+        case "left-top":      return {x:r.left,     y:r.top+30};
+        case "right-top":     return {x:r.right,    y:r.top+30};
+        case "left-bottom":   return {x:r.left,     y:r.bottom-30};
+        case "right-bottom":  return {x:r.right,    y:r.bottom-30};
+        default:              return {x:r.cx,       y:r.cy};
+      }
+    }
+
+    function App() {
+      const [hovered, setHovered] = useState(null);
+      const [arrows,  setArrows]  = useState([]);
+      const containerRef = useRef(null);
+      const refs = {
+        customer:    useRef(null),
+        location:    useRef(null),
+        fact:        useRef(null),
+        date:        useRef(null),
+        time:        useRef(null),
+        transaction: useRef(null),
+        device:      useRef(null),
+      };
+
+      const calc = useCallback(() => {
+        if (!containerRef.current) return;
+        const cb = containerRef.current.getBoundingClientRect();
+        const r = (id) => {
+          const el = refs[id].current;
+          if (!el) return null;
+          const b = el.getBoundingClientRect();
+          const left = b.left - cb.left, top = b.top - cb.top;
+          return {
+            left, top,
+            right:  left + b.width,
+            bottom: top  + b.height,
+            cx: left + b.width  / 2,
+            cy: top  + b.height / 2,
+          };
+        };
+
+        const fact        = r("fact");
+        const customer    = r("customer");
+        const location    = r("location");
+        const date        = r("date");
+        const time        = r("time");
+        const transaction = r("transaction");
+        const device      = r("device");
+        if (!fact) return;
+
+        const lines = [];
+
+        /* Customer (12 o'clock, top) → Fact top */
+        if (customer)
+          lines.push({ id:"customer", color:"#5b8dd9",
+            d: gentleCurve(anchor(customer,"bottom"), anchor(fact,"top"), 16) });
+
+        /* Location (2 o'clock, upper-right) → Fact right-top */
+        if (location)
+          lines.push({ id:"location", color:"#e07b5a",
+            d: gentleCurve(anchor(location,"left"), anchor(fact,"right-top"), -20) });
+
+        /* Transaction (4 o'clock, lower-right) → Fact right-bottom */
+        if (transaction)
+          lines.push({ id:"transaction", color:"#d95b8a",
+            d: gentleCurve(anchor(transaction,"left"), anchor(fact,"right-bottom"), 20) });
+
+        /* Device (6 o'clock, bottom) → Fact bottom */
+        if (device)
+          lines.push({ id:"device", color:"#5bc4d9",
+            d: gentleCurve(anchor(device,"top"), anchor(fact,"bottom"), -16) });
+
+        /* Date (8 o'clock, lower-left) → Fact left-bottom */
+        if (date)
+          lines.push({ id:"date", color:"#5bbf8a",
+            d: gentleCurve(anchor(date,"right"), anchor(fact,"left-bottom"), -20) });
+
+        /* Time (10 o'clock, upper-left) → Date (8 o'clock) — NOT to Fact */
+        if (date && time)
+          lines.push({ id:"date-time", color:"#a0c878",
+            d: gentleCurve(anchor(time,"bottom"), anchor(date,"top"), -16) });
+
+        setArrows(lines);
+      }, []);
+
+      useEffect(() => {
+        const t = setTimeout(calc, 80);
+        window.addEventListener("resize", calc);
+        return () => { clearTimeout(t); window.removeEventListener("resize", calc); };
+      }, [calc]);
+
+      const dim = (id) => schema.dims.find(d => d.id === id);
+
+      return (
+        <div style={{
+          minHeight:"100vh",
+          background:"#0d1117",
+          fontFamily:"'DM Mono','Courier New',monospace",
+          paddingBottom:"60px",
+        }}>
+
+          {/* ── HEADER ── */}
+          <div style={{ textAlign:"center", padding:"32px 20px 36px" }}>
+            <div style={{
+              fontSize:"14px", letterSpacing:"4px", color:"#c8a96e",
+              textTransform:"uppercase", marginBottom:"10px", fontWeight:700
+            }}>
+              BNA — Banque Nationale Agricole de Tunisie
+            </div>
+            <h1 style={{
+              margin:0, fontSize:"38px", fontWeight:800,
+              color:"#f0e0c0", letterSpacing:"2px"
+            }}>
+              Data Warehouse Schema
+            </h1>
+            <div style={{
+              fontSize:"14px", color:"#6a6a6a", marginTop:"8px",
+              letterSpacing:"3px", fontWeight:600
+            }}>
+              STAR SCHEMA — FRAUD DETECTION
+            </div>
+            <div style={{
+              width:"80px", height:"2px",
+              background:"linear-gradient(90deg,transparent,#c8a96e,transparent)",
+              margin:"12px auto 0"
+            }} />
+          </div>
+
+          {/* ── CIRCULAR DIAGRAM — absolute positioned cards ── */}
+          <div
+            ref={containerRef}
+            style={{
+              position:"relative",
+              width:"100%",
+              maxWidth:"1120px",
+              height:"1020px",
+              margin:"0 auto",
+            }}
+          >
+            {/* SVG lines */}
+            <svg style={{
+              position:"absolute", top:0, left:0,
+              width:"100%", height:"100%",
+              overflow:"visible", pointerEvents:"none", zIndex:1
+            }}>
+              {arrows.map((a, i) => (
+                <path
+                  key={i}
+                  d={a.d}
+                  stroke={hovered === a.id ? a.color : a.color + "80"}
+                  strokeWidth={hovered === a.id ? 2.8 : 2.1}
+                  fill="none"
+                  strokeLinecap="round"
+                  style={{ transition:"stroke 0.2s, stroke-width 0.2s" }}
+                />
+              ))}
+            </svg>
+
+            {/* ── FACT TABLE — dead center ── */}
+            <div style={{ position:"absolute", left:420, top:345 }}>
+              <FactCard factRef={refs.fact} />
+            </div>
+
+            {/* ── CUSTOMER — 12 o'clock (top center) ── */}
+            <div style={{ position:"absolute", left:440, top:28 }}>
+              <DimCard dim={dim("customer")} highlighted={hovered==="customer"}
+                       onHover={setHovered} cardRef={refs.customer} />
+            </div>
+
+            {/* ── LOCATION — 2 o'clock (upper right) ── */}
+            <div style={{ position:"absolute", left:820, top:200 }}>
+              <DimCard dim={dim("location")} highlighted={hovered==="location"}
+                       onHover={setHovered} cardRef={refs.location} />
+            </div>
+
+            {/* ── TRANSACTION — 4 o'clock (lower right) ── */}
+            <div style={{ position:"absolute", left:820, top:610 }}>
+              <DimCard dim={dim("transaction")} highlighted={hovered==="transaction"}
+                       onHover={setHovered} cardRef={refs.transaction} />
+            </div>
+
+            {/* ── DEVICE — 6 o'clock (bottom center) ── */}
+            <div style={{ position:"absolute", left:440, top:840 }}>
+              <DimCard dim={dim("device")} highlighted={hovered==="device"}
+                       onHover={setHovered} cardRef={refs.device} />
+            </div>
+
+            {/* ── DATE — 8 o'clock (lower left) ── */}
+            <div style={{ position:"absolute", left:50, top:590 }}>
+              <DimCard dim={dim("date")} highlighted={hovered==="date"}
+                       onHover={setHovered} cardRef={refs.date} />
+            </div>
+
+            {/* ── TIME — 10 o'clock (upper left, connects only to Date) ── */}
+            <div style={{ position:"absolute", left:50, top:180 }}>
+              <DimCard dim={dim("time")} highlighted={hovered==="time"}
+                       onHover={setHovered} cardRef={refs.time} />
+            </div>
+
+          </div>{/* end diagram */}
+
+          {/* ── LEGEND ── */}
+          <div style={{
+            display:"flex", flexWrap:"wrap", gap:"22px",
+            alignItems:"center", justifyContent:"center",
+            padding:"14px 28px", margin:"0 auto 14px",
+            maxWidth:"800px",
+            background:"rgba(255,255,255,0.03)",
+            border:"1px solid rgba(255,255,255,0.07)",
+            borderRadius:"10px",
+          }}>
+            <div style={{
+              fontSize:"12px", letterSpacing:"2px",
+              color:"#555", textTransform:"uppercase", fontWeight:700
+            }}>Legend</div>
+            {[
+              { label:"PK — Primary Key",    color:"#c8a96e", line:false },
+              { label:"FK — Foreign Key",    color:"#9090c8", line:false },
+              { label:"KPI / Measure",       color:"#c8d8b0", line:false },
+              { label:"Dim to Fact",         color:"#888888", line:true  },
+              { label:"Dim_Date — Dim_Time", color:"#a0c878", line:true  },
+            ].map((l, i) => (
+              <div key={i} style={{ display:"flex", alignItems:"center", gap:"8px" }}>
+                {l.line ? (
+                  <svg width="32" height="14" style={{overflow:"visible"}}>
+                    <path d="M 0 7 Q 16 2 32 7"
+                          stroke={l.color} strokeWidth="2.2"
+                          fill="none" strokeLinecap="round"/>
+                  </svg>
+                ) : (
+                  <div style={{
+                    width:"12px", height:"12px",
+                    borderRadius:"3px", background:l.color, flexShrink:0
+                  }} />
+                )}
+                <span style={{
+                  fontSize:"13px", color:"#888", letterSpacing:"0.4px"
+                }}>{l.label}</span>
+              </div>
+            ))}
+          </div>
+
+          <div style={{
+            textAlign:"center", fontSize:"13px",
+            color:"#3a3a3a", letterSpacing:"1px"
+          }}>
+            Hover over any dimension to highlight its connection
+          </div>
+
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>
